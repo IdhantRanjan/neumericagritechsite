@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product — Neumeric</title>
+  <meta name="description" content="One computer-vision system, three financial products for the farmer: the insurance advocate, parametric payouts, and the grain-marketing copilot." />
+  <link rel="icon" href="assets/brand/mark.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="grain"></div>
+
+  <header class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="brand" aria-label="Neumeric home">
+        <img class="m" src="assets/brand/mark.svg" alt="" />
+        <span class="w">&lt;/Neumeric&gt;</span>
+      </a>
+      <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="product.html" aria-current="page">Product</a>
+        <a href="manifesto.html">Manifesto</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+      <div class="nav-cta">
+        <button class="nav-burger" id="burger" aria-label="Menu">
+          <svg width="20" height="20" viewBox="0 0 20 20" stroke="currentColor" stroke-width="1.5"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+        </button>
+        <a href="contact.html" class="pill pill--out">Early access
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- hero opener -->
+  <section class="hero">
+    <img class="hero-motif" src="assets/brand/mark-cream.svg" alt="" aria-hidden="true" />
+    <div class="wrap hero-inner">
+      <span class="eyebrow">The product</span>
+      <h1 class="display">One camera.<br>Three ways it <em class="accent">pays</em>.</h1>
+      <p class="lead">The camera establishes ground truth about a physical asset. A financial product turns that truth into money for the farmer. Same core system — three applications.</p>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0">
+    <div class="wrap">
+
+      <!-- Pillar 1 -->
+      <div class="feature reveal">
+        <div class="fx">
+          <div class="k">01 · Building now</div>
+          <h3 class="h2">The insurance advocate</h3>
+          <p>Farmers must report acreage, document yield history, and file claims after hail, flood, drought, or disease — a manual, error-prone process where the adjuster works for the insurer, not you.</p>
+          <p>Neumeric uses computer vision on drone and phone imagery to document damage objectively, build a claim that's fast and hard to deny, and catch the USDA/FSA program money that paperwork usually buries. Think TurboTax for crop insurance — found money, on your side.</p>
+          <span class="tag now">Live focus</span>
+        </div>
+        <div class="diagram">
+          <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet">
+            <rect x="120" y="40" width="160" height="220" rx="4" fill="#fffdfa" stroke="#e8e0d3"/>
+            <line x1="140" y1="72" x2="260" y2="72" stroke="#dce6d6" stroke-width="2"/>
+            <line x1="140" y1="96" x2="240" y2="96" stroke="#dce6d6" stroke-width="2"/>
+            <line x1="140" y1="120" x2="255" y2="120" stroke="#dce6d6" stroke-width="2"/>
+            <line x1="140" y1="144" x2="230" y2="144" stroke="#dce6d6" stroke-width="2"/>
+            <circle cx="230" cy="210" r="30" fill="#1a7a37" opacity=".12"/>
+            <path d="M216 210l10 10 18 -20" fill="none" stroke="#1a7a37" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <text x="200" y="285" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" letter-spacing="1" fill="#1a7a37">CLAIM · APPROVED</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Pillar 2 -->
+      <div class="feature rev reveal">
+        <div class="fx">
+          <div class="k">02 · Coming next</div>
+          <h3 class="h2">Parametric payouts</h3>
+          <p>Traditional insurance pays only after a human adjuster inspects the damage — slow, and easy to dispute. Parametric insurance pays automatically when an objective trigger is hit.</p>
+          <p>Neumeric's vision system can <em>be</em> that trigger: a policy that pays out the moment drone imagery confirms stand loss past a threshold. No adjuster, no dispute, no paperwork — the same data underwrites the policy and releases the money.</p>
+          <span class="tag">Expansion</span>
+        </div>
+        <div class="diagram">
+          <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet">
+            <rect x="60" y="120" width="280" height="60" rx="4" fill="#f2f6ee" stroke="#cdd9c6"/>
+            <rect x="60" y="120" width="200" height="60" rx="4" fill="#1a7a37" opacity=".14"/>
+            <line x1="260" y1="104" x2="260" y2="196" stroke="#1a7a37" stroke-width="2" stroke-dasharray="4 4"/>
+            <text x="60" y="210" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#575049">STAND LOSS</text>
+            <text x="248" y="98" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#1a7a37">TRIGGER</text>
+            <path d="M300 60l-16 34h14l-14 30 34 -44h-16l14 -20z" fill="#1a7a37"/>
+            <text x="200" y="255" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" letter-spacing="1" fill="#1a7a37">AUTO · PAID</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Pillar 3 -->
+      <div class="feature reveal">
+        <div class="fx">
+          <div class="k">03 · Coming next</div>
+          <h3 class="h2">The marketing copilot</h3>
+          <p>Farmers decide when and how much of the crop to sell across an 18-month window — juggling futures, local basis, storage cost, cash flow, and their insurance floor. Mostly on gut feel, which leads to panic-selling and missed value.</p>
+          <p>We don't predict prices — nobody honestly can, and it isn't our place to. We take your CV-verified yield and show your real position, model the scenarios, and help you sell with discipline instead of emotion.</p>
+          <span class="tag">Expansion</span>
+        </div>
+        <div class="diagram">
+          <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet">
+            <line x1="60" y1="240" x2="340" y2="240" stroke="#cdd9c6" stroke-width="1.5"/>
+            <line x1="60" y1="60" x2="60" y2="240" stroke="#cdd9c6" stroke-width="1.5"/>
+            <polyline points="60,200 110,180 150,205 195,150 245,165 290,110 340,130" fill="none" stroke="#1a7a37" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="195" cy="150" r="5" fill="#1a7a37"/>
+            <circle cx="290" cy="110" r="5" fill="#1a7a37"/>
+            <line x1="60" y1="150" x2="340" y2="150" stroke="#1a7a37" stroke-width="1.5" stroke-dasharray="4 4" opacity=".5"/>
+            <text x="66" y="144" font-family="'IBM Plex Mono',monospace" font-size="9" fill="#575049">INSURANCE FLOOR</text>
+          </svg>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- moat / why defensible -->
+  <section class="section">
+    <div class="wrap">
+      <div class="opener reveal">
+        <span class="eyebrow">Why it holds</span>
+        <h2 class="h1">We own the loop,<br>not just the <em class="accent">detection</em>.</h2>
+      </div>
+      <div class="pillars reveal">
+        <div class="pillar">
+          <div class="idx">→</div>
+          <div><h3 class="h3">A data flywheel</h3><p>Every field and herd imaged makes the models sharper. That data compounds in a way a software-only competitor can't easily replicate.</p></div>
+        </div>
+        <div class="pillar">
+          <div class="idx">→</div>
+          <div><h3 class="h3">Measurement <em>and</em> transaction</h3><p>Most ag-CV companies sell a bounding box. We own the full path from image to a paid claim, a payout, or a sell decision — the part farmers actually pay for.</p></div>
+        </div>
+        <div class="pillar">
+          <div class="idx">→</div>
+          <div><h3 class="h3">A regulatory moat</h3><p>Insurance and advisory work carries real compliance weight. Clearing it properly is exactly why it becomes a durable barrier to entry over time.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule" />
+
+  <section class="section cta-final">
+    <div class="wrap reveal">
+      <span class="eyebrow">Early access</span>
+      <h2 class="h1" style="margin-top:24px">See it on<br>your ground.</h2>
+      <p class="lead">We're validating with Midwest farmers now. Come be one of the first.</p>
+      <a href="contact.html" class="pill pill--solid">Request early access
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="wrap">
+      <div class="footer-top">
+        <a href="index.html" class="brand">
+          <img class="m" src="assets/brand/mark.svg" alt="" />
+          <span class="w">&lt;/Neumeric&gt;</span>
+        </a>
+        <nav>
+          <a href="index.html">Home</a>
+          <a href="product.html">Product</a>
+          <a href="manifesto.html">Manifesto</a>
+          <a href="contact.html">Contact</a>
+        </nav>
+      </div>
+      <p class="fine">© <span data-year></span> Neumeric · neumeric.xyz — Ground truth for the farmer. Neumeric is an early-stage product currently being validated with farmers; nothing on this page is an offer of insurance, a payout, or financial advice.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

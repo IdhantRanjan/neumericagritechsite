@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Early access — Neumeric</title>
+  <meta name="description" content="We're talking to Midwest farmers right now. Tell us about your operation and be one of the first to put verified ground truth on your side of the table." />
+  <link rel="icon" href="assets/brand/mark.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="grain"></div>
+
+  <header class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="brand" aria-label="Neumeric home">
+        <img class="m" src="assets/brand/mark.svg" alt="" />
+        <span class="w">&lt;/Neumeric&gt;</span>
+      </a>
+      <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="product.html">Product</a>
+        <a href="manifesto.html">Manifesto</a>
+        <a href="contact.html" aria-current="page">Contact</a>
+      </nav>
+      <div class="nav-cta">
+        <button class="nav-burger" id="burger" aria-label="Menu">
+          <svg width="20" height="20" viewBox="0 0 20 20" stroke="currentColor" stroke-width="1.5"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+        </button>
+        <a href="#form" class="pill pill--out">Early access
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero" style="padding-bottom:0">
+    <img class="hero-motif" src="assets/brand/mark-cream.svg" alt="" aria-hidden="true" />
+    <div class="wrap hero-inner">
+      <span class="eyebrow">Early access</span>
+      <h1 class="display">Let's <em class="accent">talk</em>.</h1>
+      <p class="lead">We're sitting at kitchen tables and truck tailgates across the Midwest right now — learning exactly how claims, payments, and marketing decisions actually get made. Tell us about your operation and we'll be in touch.</p>
+    </div>
+  </section>
+
+  <section class="section" id="form">
+    <div class="wrap">
+      <form class="form reveal" id="ea-form" novalidate>
+        <div class="form-grid">
+          <div class="field">
+            <label for="f-name">Name</label>
+            <input id="f-name" name="name" type="text" placeholder="Your name" required />
+          </div>
+          <div class="field">
+            <label for="f-email">Email</label>
+            <input id="f-email" name="email" type="email" placeholder="you@farm.com" required />
+          </div>
+          <div class="field">
+            <label for="f-type">Operation</label>
+            <select id="f-type" name="type">
+              <option value="">Select…</option>
+              <option>Row crop — corn / soybean</option>
+              <option>Specialty crops</option>
+              <option>Diversified</option>
+              <option>Livestock</option>
+              <option>Insurance agent</option>
+              <option>Lender / co-op</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-acres">Acres</label>
+            <select id="f-acres" name="acres">
+              <option value="">Select…</option>
+              <option>Under 100</option>
+              <option>100 – 1,000</option>
+              <option>1,000 – 5,000</option>
+              <option>5,000+</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label for="f-note">What costs you the most sleep? (optional)</label>
+            <textarea id="f-note" name="note" placeholder="The decision or the paperwork that eats your season…"></textarea>
+          </div>
+        </div>
+        <div class="form-foot">
+          <button type="submit" class="pill pill--solid">Request early access
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
+          </button>
+          <span class="form-note">No spam — we'll only reach out about early access.</span>
+        </div>
+        <div class="form-success" id="ea-success">
+          Thanks — we've got it. We'll reach out personally when there's something real to show you.
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- building in public -->
+  <section class="section" style="padding-top:0">
+    <div class="wrap">
+      <div class="opener reveal">
+        <span class="eyebrow">Where we are</span>
+        <h2 class="h1">Early, real, and<br>building in the <em class="accent">open</em>.</h2>
+        <p class="lead">Neumeric is pre-launch. We won't put fake logos or made-up numbers on this page — when we have real results from real fields, you'll see those instead.</p>
+      </div>
+      <div class="notes reveal">
+        <div class="note">
+          <div class="k">Method</div>
+          <h4>Built with farmers</h4>
+          <p>Every feature starts as a conversation with a grower about a problem that actually cost them money.</p>
+        </div>
+        <div class="note">
+          <div class="k">Sequence</div>
+          <h4>Advocate first</h4>
+          <p>We start where the value is immediate and obvious — helping you get paid what you're already owed.</p>
+        </div>
+        <div class="note">
+          <div class="k">Honesty</div>
+          <h4>The hard parts</h4>
+          <p>Parametric payouts and marketing tools carry real regulatory weight. We'd rather clear it properly than cut corners.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="wrap">
+      <div class="footer-top">
+        <a href="index.html" class="brand">
+          <img class="m" src="assets/brand/mark.svg" alt="" />
+          <span class="w">&lt;/Neumeric&gt;</span>
+        </a>
+        <nav>
+          <a href="index.html">Home</a>
+          <a href="product.html">Product</a>
+          <a href="manifesto.html">Manifesto</a>
+          <a href="contact.html">Contact</a>
+        </nav>
+      </div>
+      <p class="fine">© <span data-year></span> Neumeric · neumeric.xyz — Ground truth for the farmer. Neumeric is an early-stage product currently being validated with farmers; nothing on this page is an offer of insurance, a payout, or financial advice.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
