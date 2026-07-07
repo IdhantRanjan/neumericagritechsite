@@ -1,0 +1,97 @@
+{
+  "$comment": "RMA/FSA deadline rules — Illinois, 2026 crop year, corn & soybeans. Dates compiled from RMA county actuarial documents and FSA program calendars; VERIFY against the RMA Actuarial Information Browser and county FSA office before relying on them for a real filing. Rules are data, not code (ARCHITECTURE.md §5): refresh annually.",
+  "state": "IL",
+  "year": 2026,
+  "rules": [
+    {
+      "id": "rma-sales-closing-2026",
+      "agency": "RMA",
+      "crops": ["corn", "soybeans"],
+      "date": "2026-03-15",
+      "title": "Sales closing / policy change deadline",
+      "description": "Last day to buy a new crop insurance policy or change coverage level, plan, or options for the 2026 crop year.",
+      "consequence": "Miss it and you're locked into last year's coverage decisions for the entire year.",
+      "source": "RMA county actuarial documents (IL, spring-planted row crops)"
+    },
+    {
+      "id": "fsa-arcplc-election-2026",
+      "agency": "FSA",
+      "crops": ["corn", "soybeans"],
+      "date": "2026-03-16",
+      "title": "ARC/PLC election & enrollment",
+      "description": "Elect and enroll in ARC-County, ARC-Individual, or PLC for 2026 covered commodities at your county FSA office.",
+      "consequence": "No enrollment means no ARC/PLC payment for the year even if prices or county revenue collapse.",
+      "source": "FSA ARC/PLC program calendar — confirm exact 2026 date with county office"
+    },
+    {
+      "id": "rma-final-plant-corn-2026",
+      "agency": "RMA",
+      "crops": ["corn"],
+      "date": "2026-06-05",
+      "title": "Final planting date — corn",
+      "description": "Last day to plant corn with full insurance guarantee. A 25-day late-planting period follows with the guarantee reduced ~1%/day; prevented-planting claims key off this date.",
+      "consequence": "Planting after this date without documentation reduces or jeopardizes your guarantee.",
+      "source": "RMA IL actuarial documents (most IL counties; a few southern counties differ)"
+    },
+    {
+      "id": "rma-final-plant-soy-2026",
+      "agency": "RMA",
+      "crops": ["soybeans"],
+      "date": "2026-06-20",
+      "title": "Final planting date — soybeans",
+      "description": "Last day to plant soybeans with full insurance guarantee; 25-day late-planting period follows.",
+      "consequence": "Same guarantee-reduction mechanics as corn.",
+      "source": "RMA IL actuarial documents"
+    },
+    {
+      "id": "fsa-rma-acreage-report-2026",
+      "agency": "FSA + RMA",
+      "crops": ["corn", "soybeans"],
+      "date": "2026-07-15",
+      "title": "Acreage reporting deadline",
+      "description": "Report planted acres by crop, field, and practice to both your insurance agent (RMA) and county FSA office. Neumeric assembles this from your field and crop-season records.",
+      "consequence": "Unreported acres are uninsured acres, and FSA program eligibility depends on the report.",
+      "source": "RMA/FSA common acreage reporting date for IL spring-planted crops"
+    },
+    {
+      "id": "rma-premium-billing-2026",
+      "agency": "RMA",
+      "crops": ["corn", "soybeans"],
+      "date": "2026-08-15",
+      "title": "Premium billing date",
+      "description": "Crop insurance premium billing issued; interest accrues on unpaid premium after ~30 days.",
+      "consequence": "Late payment accrues interest and can affect coverage standing.",
+      "source": "RMA billing schedule (spring crops)"
+    },
+    {
+      "id": "rma-eoi-corn-2026",
+      "agency": "RMA",
+      "crops": ["corn"],
+      "date": "2026-12-10",
+      "title": "End of insurance period — corn",
+      "description": "Latest date insurance attaches to unharvested corn; harvest or file notice before this date.",
+      "consequence": "Losses discovered after the end of the insurance period are not covered.",
+      "source": "RMA IL actuarial documents"
+    },
+    {
+      "id": "rma-production-report-2027",
+      "agency": "RMA",
+      "crops": ["corn", "soybeans"],
+      "date": "2027-04-29",
+      "title": "Production reporting deadline (2026 crop)",
+      "description": "Report 2026 actual production to your agent — this sets your APH yield history, which sets next year's guarantee.",
+      "consequence": "Missing or sloppy production reports permanently drag down the yield history your future coverage is built on.",
+      "source": "RMA production reporting date for IL spring crops"
+    },
+    {
+      "id": "rma-notice-of-loss",
+      "agency": "RMA",
+      "crops": ["corn", "soybeans"],
+      "relative": "within 72 hours of discovering damage",
+      "title": "Notice of loss — 72-hour rule",
+      "description": "Give notice to your agent within 72 hours of discovering damage (hail, flood, wind, disease), and before destroying or harvesting the damaged crop. Photograph and document first — this is the moment Neumeric's evidence capture exists for.",
+      "consequence": "Late notice is one of the most common reasons claims get reduced or denied.",
+      "source": "Common Crop Insurance Policy basic provisions"
+    }
+  ]
+}

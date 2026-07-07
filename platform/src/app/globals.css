@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+/* Neumeric design tokens — mirrors ../design-tokens.md (landing site).
+   Cream canvas, ink text, warm ash hairlines, forest accent. The product UI
+   is the calmer sibling of the landing page: same palette, less spectacle. */
+:root {
+  --cream: #fff8f1;
+  --paper: #fffdfa;
+  --ink: #14120e;
+  --ink-soft: #575049;
+  --ash: #e8e0d3;
+  --forest: #1a7a37;
+  --forest-deep: #0f5a28;
+  --forest-ink: #0c4a22;
+  --forest-tint: rgba(26, 122, 55, 0.07);
+  --amber: #a05e1a;
+  --amber-tint: rgba(160, 94, 26, 0.09);
+  --red: #a03028;
+  --red-tint: rgba(160, 48, 40, 0.08);
+}
+
+@theme inline {
+  --color-cream: var(--cream);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ash: var(--ash);
+  --color-forest: var(--forest);
+  --color-forest-deep: var(--forest-deep);
+  --color-forest-ink: var(--forest-ink);
+  --font-serif: var(--font-playfair);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-plex-mono);
+}
+
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  letter-spacing: -0.02em;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+h1, h2, h3, .serif {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+/* mono eyebrow / metadata label */
+.label {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.card {
+  background: var(--paper);
+  border: 1px solid var(--ash);
+  border-radius: 4px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 60px;
+  padding: 0.55rem 1.25rem;
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  border: 1.5px solid var(--forest);
+  color: var(--forest-ink);
+  background: transparent;
+}
+.pill:hover { background: var(--forest); color: var(--cream); }
+.pill--solid { background: var(--forest); color: var(--cream); }
+.pill--solid:hover { background: var(--forest-deep); color: var(--cream); }
+.pill--quiet { border-color: var(--ash); color: var(--ink-soft); }
+.pill--quiet:hover { background: var(--ink); border-color: var(--ink); color: var(--cream); }
+.pill--sm { padding: 0.3rem 0.85rem; font-size: 11px; }
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  border-radius: 60px;
+  padding: 0.15rem 0.7rem;
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.tag--forest { background: var(--forest-tint); color: var(--forest-ink); }
+.tag--amber { background: var(--amber-tint); color: var(--amber); }
+.tag--red { background: var(--red-tint); color: var(--red); }
+.tag--ash { background: var(--ash); color: var(--ink-soft); }
+
+/* metadata "label over value" caption pairs (signature move) */
+.meta-value {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-size: 1.4rem;
+  line-height: 1.15;
+}
+
+input, select, textarea {
+  background: var(--paper);
+  border: 1px solid var(--ash);
+  border-radius: 4px;
+  padding: 0.55rem 0.75rem;
+  font-size: 15px;
+  width: 100%;
+  color: var(--ink);
+}
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--forest);
+  outline-offset: -1px;
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
+  .card { border-color: #ccc; }
+}

@@ -1,0 +1,91 @@
+{
+  "$comment": "USDA/FSA/NRCS program catalog for the program-money finder. Criteria are structured so the matcher can show WHY something matched and what's missing. Payment figures are labeled ranges/estimates, never promises. Verify current-year signup windows with the county FSA/NRCS office; ad-hoc disaster programs (ERP-style) change year to year.",
+  "programs": [
+    {
+      "id": "arc-plc",
+      "agency": "FSA",
+      "name": "ARC/PLC (Agriculture Risk Coverage / Price Loss Coverage)",
+      "summary": "Annual safety-net payment on covered commodities when county revenue (ARC) or national price (PLC) falls below its reference. Costs nothing to enroll.",
+      "criteria": [
+        { "key": "covered_commodity", "label": "Grows a covered commodity (corn, soybeans, wheat...)" },
+        { "key": "base_acres", "label": "Farm has FSA base acres" },
+        { "key": "enrollment_open", "label": "Enrolled by the annual FSA deadline" }
+      ],
+      "estimatedValue": "Roughly $0–$60+/base acre depending on the year — $0 in strong-price years, meaningful in down years.",
+      "evidence": ["FSA farm records (farm/tract numbers)", "Acreage report"]
+    },
+    {
+      "id": "mal-ldp",
+      "agency": "FSA",
+      "name": "Marketing Assistance Loan / LDP",
+      "summary": "9-month nonrecourse loan against harvested grain at the county loan rate — cash flow at harvest without selling into the worst basis of the year.",
+      "criteria": [
+        { "key": "harvested_grain", "label": "Has harvested grain in storage with beneficial interest" },
+        { "key": "acreage_reported", "label": "Filed an acreage report for the crop" }
+      ],
+      "estimatedValue": "Loan liquidity at ~$2.20/bu corn, ~$5.00/bu soybeans (county loan rates vary); LDP value only when posted county prices fall below the loan rate.",
+      "evidence": ["Production evidence (scale tickets, bin measurements)", "Acreage report"]
+    },
+    {
+      "id": "eqip",
+      "agency": "NRCS",
+      "name": "EQIP (Environmental Quality Incentives Program)",
+      "summary": "Cost-share for conservation practices — cover crops, nutrient management, drainage water management, grassed waterways.",
+      "criteria": [
+        { "key": "ag_land", "label": "Operates eligible agricultural land" },
+        { "key": "conservation_interest", "label": "Planning a qualifying practice (cover crops, waterways, etc.)" },
+        { "key": "nrcs_plan", "label": "Works with NRCS on a practice plan (application ranking is periodic)" }
+      ],
+      "estimatedValue": "Commonly $30–$60/acre for cover-crop cost share; practice-dependent.",
+      "evidence": ["Field maps", "Practice plans"]
+    },
+    {
+      "id": "csp",
+      "agency": "NRCS",
+      "name": "CSP (Conservation Stewardship Program)",
+      "summary": "Annual payment for maintaining and improving existing conservation across the whole operation (5-year contracts).",
+      "criteria": [
+        { "key": "ag_land", "label": "Operates eligible agricultural land" },
+        { "key": "existing_conservation", "label": "Already meets a stewardship threshold (no-till, nutrient mgmt, etc.)" }
+      ],
+      "estimatedValue": "Often ~$10–$40/acre/year across enrolled acres.",
+      "evidence": ["Conservation activity records", "Field maps"]
+    },
+    {
+      "id": "fsfl",
+      "agency": "FSA",
+      "name": "Farm Storage Facility Loan",
+      "summary": "Low-interest financing for grain bins, dryers, and handling equipment — storage capacity is what makes a marketing plan possible.",
+      "criteria": [
+        { "key": "storage_need", "label": "Stores (or wants to store) grain on-farm" },
+        { "key": "acreage_reported", "label": "Filed an acreage report for the crop" }
+      ],
+      "estimatedValue": "Loans up to $500K per structure type at below-market rates — a financing benefit, not a payment.",
+      "evidence": ["Acreage report", "Storage quotes"]
+    },
+    {
+      "id": "erp-adhoc",
+      "agency": "FSA",
+      "name": "Emergency / disaster relief programs (ERP-style, ad hoc)",
+      "summary": "Congress regularly funds ad-hoc disaster payments for weather losses. Documented, verified loss evidence — exactly what Neumeric's claim packets produce — is what these programs pay on.",
+      "criteria": [
+        { "key": "qualifying_loss", "label": "Suffered a qualifying weather-related loss" },
+        { "key": "loss_documented", "label": "Loss is documented (insurance claim, verified imagery, production records)" }
+      ],
+      "estimatedValue": "Program-dependent; historically a meaningful fraction of uncovered loss value.",
+      "evidence": ["Claim evidence packet", "Field Condition Records", "Production records"]
+    },
+    {
+      "id": "rma-cover-crop-discount",
+      "agency": "RMA (state programs)",
+      "name": "Cover crop premium discount (Fall Covers for Spring Savings — IL)",
+      "summary": "Illinois pays a $5/acre crop-insurance premium discount on acres with fall-planted cover crops. Application windows are short and fill fast.",
+      "criteria": [
+        { "key": "state_il", "label": "Operation is in Illinois" },
+        { "key": "cover_crops", "label": "Planted (or planning) fall cover crops" }
+      ],
+      "estimatedValue": "$5/acre premium discount on enrolled acres.",
+      "evidence": ["Cover crop seeding records", "Acreage report"]
+    }
+  ]
+}
