@@ -1,0 +1,36 @@
+{
+ "report": "scripts/ml/backtest-v2-report.orig.json",
+ "nUnits": 37,
+ "nStress": 6,
+ "nControl": 31,
+ "permutations": 20000,
+ "seed": 1234,
+ "fireRateGap": {
+  "real": 0.0806,
+  "nullSummary": {
+   "mean": 0.0013,
+   "p50": 0.0806,
+   "p95": 0.2796,
+   "p99": 0.4785,
+   "max": 0.6774
+  },
+  "pValue_real_ge_null": 0.5285
+ },
+ "zSeparation": {
+  "real": 0.9988,
+  "nullSummary": {
+   "mean": 0.001,
+   "p50": -0.0664,
+   "p95": 1.8396,
+   "p99": 2.6286,
+   "max": 4.0176
+  },
+  "pValue_real_ge_null": 0.1726
+ },
+ "weatherCorrobControlFP": {
+  "real": 0,
+  "nullFractionWith0": 0.0237,
+  "nullMean": 1.6713,
+  "note": "Real value is 0 control corroborated-fires. If the null routinely also gives 0, then 0 is unremarkable and the specificity=1.00 claim rests on small n + few corroborated fires overall, not on strong discrimination."
+ }
+}
