@@ -5,14 +5,19 @@ export const dynamic = "force-dynamic";
 export default async function WelcomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ invalid?: string }>;
+  searchParams: Promise<{ invalid?: string; waitlist?: string }>;
 }) {
-  const { invalid } = await searchParams;
+  const { invalid, waitlist } = await searchParams;
   return (
     <div className="max-w-[620px] mx-auto pt-16 sm:pt-24 text-center">
       {invalid && (
         <p className="tag tag--red mb-8">
-          That workspace link isn&rsquo;t valid — check it and try again
+          That link isn&rsquo;t valid — check it and try again
+        </p>
+      )}
+      {waitlist === "confirmed" && (
+        <p className="tag tag--forest mb-8" role="status">
+          You&rsquo;re on the early-access list — confirmed. We&rsquo;ll be in touch personally.
         </p>
       )}
       <p className="label mb-4">Neumeric farm platform</p>

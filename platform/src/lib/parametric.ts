@@ -24,6 +24,7 @@
  * Open-Meteo (free archive API; commercial licensing flagged in docs).
  * The CV-vs-weather disagreement matrix IS the basis-risk gap, made visible.
  */
+import { fetchWithRetry } from "@/lib/net";
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { tables as t, type DB } from "@/db";
@@ -179,7 +180,12 @@ async function precipSum(lat: number, lng: number, from: string, to: string): Pr
   const url =
     `https://archive-api.open-meteo.com/v1/archive?latitude=${lat.toFixed(4)}&longitude=${lng.toFixed(4)}` +
     `&start_date=${from}&end_date=${to}&daily=precipitation_sum&timezone=UTC`;
-  const res = await fetch(url);
+  let res: Response;
+  try {
+    res = await fetchWithRetry(url);
+  } catch {
+    return null;
+  }
   if (!res.ok) return null;
   const j = (await res.json()) as { daily?: { precipitation_sum?: Array<number | null> } };
   const vals = j.daily?.precipitation_sum?.filter((v): v is number => v != null);

@@ -3,6 +3,7 @@
  * no key required). Returns deterministic, deduplicated scene references:
  * one scene per calendar day (lowest cloud cover wins), sorted by datetime.
  */
+import { fetchWithRetry } from "@/lib/net";
 import type { GeoJSONPolygon } from "@/db/schema";
 import { PARAMS, canonicalJson, sha256 } from "./methodology";
 
@@ -90,7 +91,7 @@ export async function searchScenes(
   let url: string | null = `${PARAMS.stac.endpoint}/search`;
   let payload: unknown = body;
   for (let page = 0; page < 5 && url; page++) {
-    const res = await fetch(url, {
+    const res = await fetchWithRetry(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

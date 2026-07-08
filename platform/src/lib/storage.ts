@@ -12,6 +12,7 @@
  * The interface is deliberately three functions so swapping to R2/S3 is a
  * ~30-line adapter, not a refactor.
  */
+import { fetchWithRetry } from "@/lib/net";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -46,7 +47,12 @@ export async function putObject(sha256: string, buf: Buffer, contentType: string
 
 export async function getObject(sha256: string, url: string | null): Promise<Buffer | null> {
   if (url) {
-    const res = await fetch(url);
+    let res: Response;
+    try {
+      res = await fetchWithRetry(url);
+    } catch {
+      return null;
+    }
     if (!res.ok) return null;
     return Buffer.from(await res.arrayBuffer());
   }

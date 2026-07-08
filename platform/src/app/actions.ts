@@ -6,6 +6,7 @@ import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { after } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { getDb, tables as t } from "@/db";
 import { demoAnalyzer } from "@/lib/cv/demo-analyzer";
@@ -18,6 +19,7 @@ import { scanField } from "@/lib/satellite/scan";
 import { ringAcres, ringToUtm, epsgForLngLat, approxRectBoundary } from "@/lib/satellite/geo";
 import { appendProvenance } from "@/lib/provenance";
 import { putObject } from "@/lib/storage";
+import { createJob, runJob } from "@/lib/jobs";
 import {
   defaultDroughtStressMethodology,
   evaluateTrigger,
@@ -152,6 +154,14 @@ export async function createOperation(formData: FormData) {
   }
 
   await audit("onboarding", "operation_created", "operation", opId, { state, fields: names.length });
+
+  // funnel: waitlist signup with this email is now onboarded
+  if (email) {
+    await db
+      .update(t.waitlistSignups)
+      .set({ status: "onboarded", onboardedOperationId: opId })
+      .where(eq(t.waitlistSignups.email, email.toLowerCase()));
+  }
 
   // Signed-in user creating a farm → owner membership (account-first path).
   // Anonymous setup keeps the legacy private link and can claim later.
@@ -411,32 +421,48 @@ const num = (formData: FormData, key: string): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
+/** Server-side bounds — never trust client input on money-adjacent numbers. */
+const numBounded = (
+  formData: FormData,
+  key: string,
+  min: number,
+  max: number
+): number | null => {
+  const n = num(formData, key);
+  if (n == null) return null;
+  if (n < min || n > max) throw new Error(`"${key}" is out of range (${min}–${max}).`);
+  return n;
+};
+
 export async function saveMarketingPosition(formData: FormData) {
   const { op } = await requireWrite();
   const db = await getDb();
   const crop = String(formData.get("crop") ?? "corn");
   const year = Number(formData.get("year") ?? new Date().getFullYear());
 
+  if (!VALID_CROPS.has(crop)) throw new Error("Unknown crop");
+  if (!Number.isInteger(year) || year < 2020 || year > 2035) throw new Error("Year out of range");
+
   const values = {
     operationId: op.id,
     crop,
     year,
-    acres: num(formData, "acres"),
-    expectedYieldBuPerAcre: num(formData, "expectedYield"),
-    producedBu: num(formData, "producedBu"),
-    storedBu: num(formData, "storedBu"),
-    soldBu: num(formData, "soldBu"),
-    avgSoldPrice: num(formData, "avgSoldPrice"),
-    contractedBu: num(formData, "contractedBu"),
-    costOfProductionPerAcre: num(formData, "costPerAcre"),
-    insuranceFloorPerBu: num(formData, "insuranceFloor"),
-    currentCashPrice: num(formData, "cashPrice"),
-    currentFuturesPrice: num(formData, "futuresPrice"),
-    typicalBasisLo: num(formData, "basisLo"),
-    typicalBasisHi: num(formData, "basisHi"),
-    storageCapacityBu: num(formData, "storageCapacity"),
-    storageCostPerBuMonth: num(formData, "storageCost"),
-    cashNeedUsd: num(formData, "cashNeed"),
+    acres: numBounded(formData, "acres", 0, 200_000),
+    expectedYieldBuPerAcre: numBounded(formData, "expectedYield", 0, 400),
+    producedBu: numBounded(formData, "producedBu", 0, 50_000_000),
+    storedBu: numBounded(formData, "storedBu", 0, 50_000_000),
+    soldBu: numBounded(formData, "soldBu", 0, 50_000_000),
+    avgSoldPrice: numBounded(formData, "avgSoldPrice", 0, 50),
+    contractedBu: numBounded(formData, "contractedBu", 0, 50_000_000),
+    costOfProductionPerAcre: numBounded(formData, "costPerAcre", 0, 10_000),
+    insuranceFloorPerBu: numBounded(formData, "insuranceFloor", 0, 50),
+    currentCashPrice: numBounded(formData, "cashPrice", 0, 50),
+    currentFuturesPrice: numBounded(formData, "futuresPrice", 0, 50),
+    typicalBasisLo: numBounded(formData, "basisLo", -10, 10),
+    typicalBasisHi: numBounded(formData, "basisHi", -10, 10),
+    storageCapacityBu: numBounded(formData, "storageCapacity", 0, 50_000_000),
+    storageCostPerBuMonth: numBounded(formData, "storageCost", 0, 5),
+    cashNeedUsd: numBounded(formData, "cashNeed", 0, 100_000_000),
     cashNeedByDate: String(formData.get("cashNeedBy") ?? "") || null,
     updatedAt: now(),
   };
@@ -571,12 +597,13 @@ export async function setFieldBoundary(fieldId: string, formData: FormData) {
 }
 
 /**
- * Scan a batch of Sentinel-2 scenes for a field. Bounded per invocation so
- * it fits serverless limits — the button says how much is left; clicking
- * again continues. Scans the current season first, then walks back a year
- * at a time so baselines accumulate.
+ * Scan a batch of Sentinel-2 scenes for a field — as a background job so
+ * the farmer's click returns immediately. Bounded per run (~20 scenes) to
+ * fit the serverless time budget; the button continues where it left off.
+ * Scans the current season first, then walks back a year at a time so
+ * baselines accumulate. UI polls /api/jobs/[id].
  */
-export async function scanFieldAction(fieldId: string) {
+export async function scanFieldAction(fieldId: string): Promise<{ jobId: string }> {
   const { op } = await requireWrite();
   const db = await getDb();
   const field = (
@@ -585,20 +612,33 @@ export async function scanFieldAction(fieldId: string) {
   if (!field) throw new Error("Unknown field");
   if (!field.boundary) throw new Error("Add a boundary first");
 
-  const thisYear = new Date().getFullYear();
-  let budget = 20; // scenes per click
-  const results: Array<{ year: number; observed: number; searched: number }> = [];
-  for (let y = thisYear; y >= thisYear - 3 && budget > 0; y--) {
-    const r = await scanField(db, field, `${y}-04-01`, y === thisYear ? new Date().toISOString().slice(0, 10) : `${y}-10-31`, {
-      maxScenes: budget,
+  const job = await createJob(op.id, "satellite_scan", fieldId);
+  after(async () => {
+    await runJob(job.id, async (setProgress) => {
+      const thisYear = new Date().getFullYear();
+      let budget = 20; // scenes per run
+      const results: Array<{ year: number; observed: number; searched: number }> = [];
+      for (let y = thisYear; y >= thisYear - 3 && budget > 0; y--) {
+        await setProgress(`Scanning ${y} season (${20 - budget}/20 scenes so far)`);
+        const r = await scanField(
+          db,
+          field,
+          `${y}-04-01`,
+          y === thisYear ? new Date().toISOString().slice(0, 10) : `${y}-10-31`,
+          { maxScenes: budget }
+        );
+        results.push({ year: y, observed: r.observed, searched: r.searched });
+        budget -= r.observed;
+        if (r.failed.length > 0 && r.observed === 0) break; // network trouble — stop burning the budget
+      }
+      await audit(op.id, "satellite_scan", "field", fieldId, { results });
+      revalidatePath(`/fields/${fieldId}`);
+      revalidatePath("/marketing");
+      const observed = results.reduce((s, r) => s + r.observed, 0);
+      return { results, observed };
     });
-    results.push({ year: y, observed: r.observed, searched: r.searched });
-    budget -= r.observed;
-    if (r.failed.length > 0 && r.observed === 0) break; // network trouble — stop burning the budget
-  }
-  await audit(op.id, "satellite_scan", "field", fieldId, { results });
-  revalidatePath(`/fields/${fieldId}`);
-  revalidatePath("/marketing");
+  });
+  return { jobId: job.id };
 }
 
 /**

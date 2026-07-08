@@ -5,8 +5,9 @@
  */
 import type { Field } from "@/db/schema";
 import type { tables } from "@/db";
-import { setFieldBoundary, scanFieldAction, evaluateTriggerAction } from "@/app/actions";
+import { setFieldBoundary, evaluateTriggerAction } from "@/app/actions";
 import { Tag } from "@/components/ui";
+import { ScanButton } from "@/components/scan-button";
 
 type Observation = typeof tables.sceneObservations.$inferSelect;
 type TriggerEval = typeof tables.triggerEvaluations.$inferSelect;
@@ -114,11 +115,10 @@ export function SatellitePanel({
                 : ""}
             </p>
           </div>
-          <form action={scanFieldAction.bind(null, field.id)}>
-            <button type="submit" className="pill pill--sm">
-              {observations.length === 0 ? "Scan this field" : "Scan more scenes"}
-            </button>
-          </form>
+          <ScanButton
+            fieldId={field.id}
+            label={observations.length === 0 ? "Scan this field" : "Scan more scenes"}
+          />
         </div>
         <Sparkline obs={observations} />
         {observations.length === 0 && (

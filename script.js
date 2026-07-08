@@ -78,20 +78,46 @@
       });
       if (email.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) { email.style.borderColor = "#c0392b"; ok = false; }
       if (!ok) return;
-      try {
-        var list = JSON.parse(localStorage.getItem("neumeric_early_access") || "[]");
-        list.push({
-          name: name.value, email: email.value,
-          type: (form.querySelector("#f-type") || {}).value || "",
+
+      // map operation type → distribution channel (funnel analytics)
+      var type = ((form.querySelector("#f-type") || {}).value || "").toLowerCase();
+      var channel = "direct";
+      if (type.indexOf("lender") !== -1 || type.indexOf("co-op") !== -1) channel = "lender";
+      else if (type.indexOf("agent") !== -1) channel = "agent";
+
+      var btn = form.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = true; btn.style.opacity = "0.6"; }
+
+      fetch("https://neumeric-platform.vercel.app/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.value.trim(),
+          name: name.value.trim(),
           acres: (form.querySelector("#f-acres") || {}).value || "",
-          note: (form.querySelector("#f-note") || {}).value || "",
-          at: new Date().toISOString()
+          channel: channel
+        })
+      })
+        .then(function (r) { return r.json().catch(function () { return {}; }); })
+        .then(function (data) {
+          if (data && data.error) {
+            if (btn) { btn.disabled = false; btn.style.opacity = ""; }
+            email.style.borderColor = "#c0392b";
+            alert(data.error);
+            return;
+          }
+          form.querySelector(".form-grid").style.display = "none";
+          form.querySelector(".form-foot").style.display = "none";
+          if (success) {
+            success.textContent =
+              "Almost there — check your email and click the confirmation link to lock in your spot.";
+            success.classList.add("show");
+          }
+        })
+        .catch(function () {
+          if (btn) { btn.disabled = false; btn.style.opacity = ""; }
+          alert("Couldn't reach the server — check your connection and try again.");
         });
-        localStorage.setItem("neumeric_early_access", JSON.stringify(list));
-      } catch (err) {}
-      form.querySelector(".form-grid").style.display = "none";
-      form.querySelector(".form-foot").style.display = "none";
-      if (success) success.classList.add("show");
     });
   }
 })();

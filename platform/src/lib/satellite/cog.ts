@@ -5,6 +5,7 @@
  * (nearest neighbor by coordinate math).
  */
 import { fromUrl } from "geotiff";
+import { withRetry } from "@/lib/net";
 import type { Grid } from "./geo";
 import type { SceneRef } from "./stac";
 
@@ -47,6 +48,10 @@ export async function readSclOnGrid(href: string, grid: Grid): Promise<Uint8Arra
  * resolution) at each grid-cell center. Fetches one covering window.
  */
 async function readRawOnGrid(href: string, grid: Grid): Promise<Float64Array> {
+  return withRetry(`cog:${href.slice(-40)}`, () => readRawOnGridOnce(href, grid));
+}
+
+async function readRawOnGridOnce(href: string, grid: Grid): Promise<Float64Array> {
   const tiff = await fromUrl(href);
   const img = await tiff.getImage();
   const [ox, oy] = img.getOrigin();

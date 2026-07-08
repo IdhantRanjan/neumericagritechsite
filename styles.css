@@ -185,6 +185,14 @@ em, .italic { font-style: italic; }
 }
 .nav-links a:hover, .nav-links a[aria-current="page"] { color: var(--forest); }
 .nav-cta { display: flex; align-items: center; gap: 14px; }
+.nav-signin {
+  font-family: var(--font-mono);
+  font-size: 12.5px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink-soft);
+  transition: color .2s ease;
+}
+.nav-signin:hover { color: var(--forest); }
+@media (max-width: 640px) { .nav-signin { display: none; } }
 .nav-burger { display: none; }
 
 /* ============================================================
