@@ -7,9 +7,11 @@
  *   scene observations.
  *
  * Rows are keyed by methodology version so a future model trains only on
- * features produced by a consistent pipeline. When ~150+ labeled events per
- * damage type exist (docs/ENGINES.md §2), this export IS the training set —
- * nothing else needs building.
+ * features produced by a consistent pipeline. Features are TIER-AWARE: a
+ * claim can carry both a satellite FCR and a drone FCR, and both sets of
+ * features are emitted (prefixed `sat_` / `drone_`) so a supervised model
+ * can learn from either or fuse them. When ~150+ labeled field-events per
+ * damage type exist (docs/ENGINES.md §2b), this export IS the training set.
  */
 import { eq } from "drizzle-orm";
 import { tables as t, type DB } from "@/db";
@@ -29,35 +31,57 @@ export interface TrainingRow {
   damageType: string | null;
   crop: string | null;
   methodologyVersion: string | null;
+  sensorTiers: string[]; // which sensor tiers contributed features to this row
   features: Record<string, number>;
   featureCompleteness: number; // fraction of expected feature slots populated
 }
 
-const SEASON_FEATURES = ["ndvi_season_mean", "ndvi_season_min", "ndvi_season_obs_n"];
+/** Model name → tier prefix for feature namespacing. */
+function tierPrefix(modelName: string): string {
+  if (modelName.startsWith("drone")) return "drone";
+  if (modelName === "demo-analyzer") return "demo";
+  return "sat";
+}
 
 export async function exportTrainingRows(db: DB): Promise<TrainingRow[]> {
   const labels = await db.select().from(t.groundTruthLabels);
   const rows: TrainingRow[] = [];
 
   for (const label of labels) {
-    const fcr = label.fcrId
-      ? (await db.select().from(t.fieldConditionRecords).where(eq(t.fieldConditionRecords.id, label.fcrId)))[0]
-      : undefined;
     const claim = label.claimId
       ? (await db.select().from(t.claims).where(eq(t.claims.id, label.claimId)))[0]
       : undefined;
 
+    // All FCRs on the claim, not just the one the label points at — a claim
+    // may carry both satellite and drone evidence, and both are real features.
+    const fcrIds = claim ? claim.fcrIds : label.fcrId ? [label.fcrId] : [];
+    const fcrs = (
+      await Promise.all(
+        fcrIds.map((fid) =>
+          db.select().from(t.fieldConditionRecords).where(eq(t.fieldConditionRecords.id, fid))
+        )
+      )
+    )
+      .map((r) => r[0])
+      .filter(Boolean);
+
     const features: Record<string, number> = {};
-    if (fcr) {
+    const tiers = new Set<string>();
+    let primaryFcr: (typeof fcrs)[number] | undefined;
+    for (const fcr of fcrs) {
+      const pfx = tierPrefix(fcr.modelName);
+      if (pfx === "demo") continue; // demo output is never training fuel
+      tiers.add(pfx);
+      if (!primaryFcr || pfx === "sat") primaryFcr = fcr;
       for (const [k, v] of Object.entries(fcr.metrics)) {
-        if (typeof v === "number" && Number.isFinite(v)) features[`fcr_${k}`] = v;
+        if (typeof v === "number" && Number.isFinite(v)) features[`${pfx}_${k}`] = v;
       }
-      if (fcr.severityPct != null) features.fcr_severity_pct = fcr.severityPct;
-      if (fcr.affectedAcres != null) features.fcr_affected_acres = fcr.affectedAcres;
-      features.fcr_confidence = fcr.confidence;
+      if (fcr.severityPct != null) features[`${pfx}_severity_pct`] = fcr.severityPct;
+      if (fcr.affectedAcres != null) features[`${pfx}_affected_acres`] = fcr.affectedAcres;
+      features[`${pfx}_confidence`] = fcr.confidence;
     }
 
-    // season-level time-series features for the label's year
+    // season-level satellite time-series features for the label's year
     const year = Number((claim?.eventDate ?? label.recordedAt).slice(0, 4));
     const obs = (await getObservations(db, label.fieldId)).filter(
       (o) => o.year === year && o.clearFrac >= 0.6 && typeof o.stats.ndvi_mean === "number"
@@ -69,7 +93,6 @@ export async function exportTrainingRows(db: DB): Promise<TrainingRow[]> {
       features.ndvi_season_obs_n = vals.length;
     }
 
-    const expected = (fcr ? Object.keys(fcr.metrics).length + 3 : 0) + SEASON_FEATURES.length;
     rows.push({
       labelId: label.id,
       labelType: label.labelType,
@@ -82,10 +105,12 @@ export async function exportTrainingRows(db: DB): Promise<TrainingRow[]> {
       fcrId: label.fcrId,
       eventDate: claim?.eventDate ?? null,
       damageType: claim?.damageType ?? null,
-      crop: fcr?.crop ?? null,
-      methodologyVersion: fcr?.modelVersion ?? null,
+      crop: primaryFcr?.crop ?? null,
+      methodologyVersion: primaryFcr?.modelVersion ?? null,
+      sensorTiers: [...tiers],
       features,
-      featureCompleteness: expected > 0 ? Math.round((Object.keys(features).length / expected) * 100) / 100 : 0,
+      // completeness relative to a satellite+season baseline of ~12 slots
+      featureCompleteness: Math.min(1, Math.round((Object.keys(features).length / 12) * 100) / 100),
     });
   }
   return rows;
