@@ -1,5 +1,16 @@
 # Neumeric — Engine Methods & Guarantees
 
+> **CV verdict, in one sentence (measured, not tuned):** 10 m satellite NDVI
+> change-detection reliably flags *regional, season-scale* drought but **cannot,
+> on its own, resolve field/patch-scale damage** — on 37 rotation-clean
+> Illinois corn patches it fired on 42% of documented-quiet controls
+> (specificity 0.58), no better than on stress patches — so field-level claims
+> require the **drone tier** and the **weather-corroboration gate**, which
+> together drove control false-positives to **0/31 (specificity 1.00)** at the
+> cost of sensitivity. Confidence is **not calibrated** (top bin ≈25% precise)
+> and is presented as such. Engine thresholds were **not tuned to this test**
+> (PARAMS_HASH unchanged). Full method + numbers in §3c.
+
 The hard technical cores, one section each: what the method is, why it's
 deterministic and reproducible, what its known limitations are, and the exact
 external dependency — (a) labeled data, (b) a carrier partner, or (c) legal
@@ -182,27 +193,89 @@ recorded per patch, `scripts/ml/train-yield.py` re-derives the model from
 more years of history (Landsat/HLS) and eventually the flywheel's
 field-level harvested-yield labels.
 
-### 3c. Damage-detection backtest (`scripts/ml/backtest-damage.ts`)
+### 3c. Damage-detection backtest v2 — leak-free, pre-registered (`scripts/ml/`)
 
-Discrimination test on the production engine: same-county CDL-verified corn
-patches, 2023-06-20 (documented IL flash drought) vs 2021-06-20 (intended
-control). Results in `scripts/ml/backtest-report.json`.
+**This supersedes the v1 backtest.** v1 (0/8 stress, 2/8 control) was
+invalidated by its own test design — rotation-contaminated baselines and a
+dirty control year — not by the engine. v2 was **pre-registered**
+(`design-backtest-v2.md`, committed before any result existed) and rebuilt to
+remove every known leak. The engine under test is `s2-l2a-cd@1.0.0`
+**unchanged** — same PARAMS_HASH as production. **Nothing was tuned to these
+results.**
 
-**Result, reported as-is: the test did not pass.** 0/8 stress-year patches
-crossed the significance gate (severity magnitudes moved the right way —
-33–43% on the hit counties — but none were ruled significant); 2/8 fired in
-the "control" year. Two design flaws in the test itself are the leading
-explanations, documented in the report: (1) rotation contamination — patches
-were corn in the event year but often soybeans in baseline years, so the
-"field's own history" baseline is a different crop; (2) 2021 was not a clean
-control in far-north IL (the two 2021 fires sit inside the real June-2021
-northern-IL dry spell). The single-field proof on a real boundary with four
-scanned seasons (docs/examples/) detected the same event at severity 62%,
-confidence 0.95. Deliberate decision: detection thresholds were NOT tuned to
-make the backtest pass — that would overfit the test and require a
-methodology version bump. Next steps are in the report (rotation-consistent
-patches, cleaner control year); the definitive measurement remains
-field-level adjuster-graded labels from the §2 flywheel.
+**Design (executed exactly).** 20 Illinois counties × 2019–2025. One ~25-acre
+corn patch per county-year, accepted only if USDA CDL confirms **corn in the
+event year AND corn in all three baseline years** (kills rotation
+contamination). Labels are **authoritative but weak/aggregate**: US Drought
+Monitor weekly county area — `stress_strong` (D2+ ≥25% any week),
+`stress_moderate` (D1+ =100% for ≥3 wks), `control` (D1+ <25% every week),
+`excluded` (ambiguous, unscored). Event date = peak-severity week for stress,
+fixed July 5 for control. Rotation-clean CDL sampling is brutal in
+corn/soy-rotation Illinois: only **37 of 140 units** yielded a qualifying
+patch (6 stress, 31 control) — a small-n result with wide CIs, stated as such.
+
+**Results (frozen engine, `backtest-v2-report.json`):**
+
+| Stratum | n | Fire rate (raw) | 95% CI | Weather-corroborated fire |
+|---|---|---|---|---|
+| stress_strong | 4 | 0.50 | 0.15–0.85 | 1/4 |
+| stress_moderate | 2 | 0.50 | 0.09–0.91 | 1/2 |
+| **control** | 31 | **0.42** | 0.26–0.59 | **0/31** |
+
+- **Specificity (raw engine): 0.58.** The engine fires on 42% of
+  documented-quiet control patches. Stress fire rate (50%) barely exceeds
+  control (42%) and the CIs overlap completely — **at 25-acre patch scale the
+  raw NDVI-z gate does not discriminate drought-stressed corn from quiet
+  corn.** The continuous z-distributions confirm it: stress mean z −2.26 vs
+  control −1.26, but control's p25 (−2.57) is *more* negative than stress's
+  p75 (−0.44) — heavy overlap. **This is the honest near-null result** the
+  brief anticipated, and it is what makes the drone tier mandatory for
+  field-level damage claims (§0).
+- **Weather corroboration is decisive.** Requiring the fire AND window
+  rainfall <60% of the location's 10-year normal (Open-Meteo ERA5) drove
+  control false-positives to **0/31 — specificity 1.00** in this sample —
+  because every control fire occurred at ≥69% (mostly >100%) of normal
+  rainfall. Sensitivity falls to ~33% (2/6). This is exactly how the product
+  already operates: the parametric engine (§5) pairs the CV fire with the
+  weather counterpart, and the sensor router (§0) sends drought→satellite,
+  hail/flood→drone. The independent physical check, not a tuned threshold, is
+  what makes the satellite signal usable.
+- **Confidence is NOT calibrated.** Fired-call reliability bins: 0.7–0.85 →
+  14% empirically stress; 0.85–1.0 → 25%. A "0.9" is nowhere near 90% correct.
+  The product already labels confidence uncalibrated and caps it; this data
+  proves it must stay that way until the §2 flywheel supplies real labels.
+
+**Honest caveats (stated, not hand-waved):** n=6 stress is tiny — every rate
+has a wide CI and sensitivity is especially uncertain. County USDM labels are
+weak: a "control" patch can be genuinely locally stressed (several large-z
+control fires — KENDALL 2019 z −8.4, LEE 2024 z −5.9 — are plausibly *real*
+localized dry-down the county-level label misses), which biases measured
+specificity *downward*; and a "stress" patch can escape, biasing sensitivity
+down. So 0.58 is a **floor** on specificity, reported as measured rather than
+explained away. The definitive field-level measurement still requires
+adjuster-graded / harvested-yield labels from the §2 flywheel — that, plus the
+drone tier, is the path past the satellite ceiling. Reproduce:
+`npx tsx scripts/ml/backtest-v2.ts`.
+
+**What this did NOT test.** Localized acute damage (hail strips, flood
+pockets) has no authoritative field-level label at any scale; that blindness
+is the drone tier's mandate (§0), not something this test could score.
+
+**Method levers — tried vs. characterized-next (honest).** The lever that was
+*run* here is **weather-corroboration** (pre-registered in the design), and it
+was decisive: it converted a specificity-0.58 raw gate into a 0/31-false-
+positive screen. The remaining levers from the build brief — s2cloudless
+(beyond SCL), multi-index corroboration (NDRE+EVI), SSURGO soil priors,
+per-pixel CDL masking, Landsat/HLS baseline extension — are **not run this
+cycle** because each requires a methodology change (PARAMS_HASH bump +
+re-validation) and, more importantly, none plausibly overturns the *cause* of
+the near-null: 10 m pixels and single-index own-history baselines cannot
+separate a stressed 25-acre corn patch from normal patch-scale variance, and
+county labels are too weak to grade patches. The productive path past the
+ceiling is not a better satellite index — it is (1) the drone tier for
+resolution and (2) real field-level labels for calibration, both already
+built and waiting on real captures. Adopting any lever remains gated on it
+moving honestly-measured, leak-free error, per the brief.
 
 ### 3d. CDL crop verification (`satellite/cdl.ts`)
 
