@@ -33,8 +33,8 @@ export default async function WelcomePage({
         <Link href="/setup" className="pill pill--solid">
           Set up your farm
         </Link>
-        <Link href="/join/demo" className="pill pill--quiet">
-          Look around the demo first
+        <Link href="/demo" className="pill pill--quiet">
+          Take the 2-minute tour
         </Link>
       </div>
 

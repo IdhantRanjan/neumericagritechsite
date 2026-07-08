@@ -187,12 +187,19 @@ export async function createSession(userId: string): Promise<string> {
 }
 
 export function sessionCookieOptions() {
+  // COOKIE_DOMAIN (e.g. ".neumeric.xyz") scopes the session across the
+  // landing site (neumeric.xyz) and the dashboard (dashboard.neumeric.xyz)
+  // so a farmer signs in once and is authenticated on both. Unset locally
+  // and on *.vercel.app (host-only cookie). sameSite=lax is safe here
+  // because both subdomains are same-site under the registrable domain.
+  const domain = process.env.COOKIE_DOMAIN || undefined;
   return {
     httpOnly: true as const,
     sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",
     maxAge: 60 * 60 * 24 * SESSION_DAYS,
     path: "/",
+    ...(domain ? { domain } : {}),
   };
 }
 
