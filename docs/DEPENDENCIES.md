@@ -53,6 +53,18 @@ The blocking list: each item names **what it blocks**, **who to talk to**, and *
 ### 10. ⚖️ Success-fee / contingency pricing review
 - "We only make money when you get money" is powerful but interacts with #1 (public-adjuster rules) and possibly state fee-sharing rules for program payments. Get it reviewed before any farmer signs one.
 
+### 11. ⚖️ Attorney review of the drafted legal pages (BLOCKS PUBLIC LAUNCH)
+- Privacy policy, Terms of Service, per-pillar disclaimers, and the trust page are AI-drafted and live behind a visible "Draft — not yet reviewed by an attorney" banner (`platform/src/app/legal/legal-shared.tsx`, `ATTORNEY_REVIEWED = false`). A licensed attorney must review before public launch; only a human flips the flag. Specific questions queued: GLBA classification, arbitration clause yes/no, deletion carve-out language for append-only evidence, Illinois venue.
+
+### 12. 📧 Transactional email provider (BLOCKS ACCOUNT SIGN-IN AT LAUNCH)
+- Magic links, invites, and waitlist confirmations need `RESEND_API_KEY` + a verified sending domain. Without it, production sign-in emails cannot send (legacy private links still work for pilot farmers). ~30 minutes of founder work: Resend account, verify neumeric.xyz DNS, set env vars.
+
+### 13. 💾 Database backup tier (BLOCKS SCALE, not pilot)
+- Turso free-tier point-in-time restore is limited. Before real-farmer scale: paid plan or nightly `.dump` to object storage (docs/DEPLOY.md §Database durability).
+
+### 14. 📊 Market-data licensing (Pillar 3 quality-of-life)
+- Live CME futures quotes require a licensed data agreement (delayed quotes still carry exchange terms); free public cash-bid APIs are scarce. Current design uses farmer-entered prices — honest and legally clean. Revisit when a lender partner can sponsor a data seat.
+
 ---
 
 **Summary for the founder:** nothing blocks continued software work on Pillar 1 and the demo builds of Pillars 2–3. The human conversations to start now, in order: (1) friendly agent/adjuster on packet format, (2) one insurance-regulatory counsel consult covering #1/#4/#10, (3) carrier/reinsurer intro pipeline for Pillar 2, (4) CFTC/NFA counsel lined up for when Pillar 3 approaches launch.

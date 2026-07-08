@@ -108,6 +108,59 @@ The uncertainty band is real: inter-year baseline variance + coverage
 penalty, floored at ±8%. Insufficient data returns a reason, not a number.
 Feeds the marketing dashboard as a labeled estimate beside manual entry.
 
+### 3b. Trained yield model (`satellite/yield-model.ts`, `scripts/ml/`)
+
+The absolute model now exists, trained on **real labels**: USDA NASS county
+corn yields (Illinois, 2019-2023) joined to Sentinel-2 NDVI season features
+computed over **CDL-verified corn patches** (year-specific crop check via
+CropScape — IL corn/soy rotation makes historical frequency insufficient).
+141 patches, 80 county-year units, 78 label-matched samples.
+
+**The honest headline:** NDVI features alone FAILED leave-one-year-out
+validation (R² −0.41 — worse than predicting the mean, because the year
+effect dominates IL county yields). That run is preserved in the training
+report. Adding mechanism-chosen season weather covariates (ERA5 June-Aug
+precipitation, mean daily max temp, days >32 °C) fixed the year axis:
+
+| CV axis (Ridge, deployed) | RMSE | MAE | R² |
+|---|---|---|---|
+| Leave-one-year-out | 13.63 bu/ac | 11.48 | 0.205 |
+| Leave-one-county-out | 11.18 bu/ac | 9.13 | 0.465 |
+
+Deployment rules enforced in code: the in-product error is the **worst CV
+axis** (13.6 RMSE), widened **1.5×** for field-vs-county disaggregation
+(stated as a multiplier, not a measured field validation); corn only;
+estimate available only once the season's June-August weather record is
+complete (a partial-season weather sum would be a biased feature — the
+self-relative estimator is the in-season indicator). Training is
+reproducible: deterministic patch sampling (seeded PRNG), scene IDs
+recorded per patch, `scripts/ml/train-yield.py` re-derives the model from
+`features.jsonl` + the public NASS bulk file. Next accuracy step ((a)):
+more years of history (Landsat/HLS) and eventually the flywheel's
+field-level harvested-yield labels.
+
+### 3c. Damage-detection backtest (`scripts/ml/backtest-damage.ts`)
+
+Discrimination test on the production engine: same-county CDL-verified corn
+patches, 2023-06-20 (documented IL flash drought) vs 2021-06-20 (near-normal
+control). Results in `scripts/ml/backtest-report.json`. What it measures:
+whether the engine separates a documented stress season from a quiet one at
+patch level. What it cannot measure (stated in the report): field-level
+false-positive/negative rates — those need adjuster-graded labels, which is
+what the §2 flywheel collects. Public corroboration only (RMA cause-of-loss
+shows drought dominating 2023 IL) — regional consistency, not validation.
+
+### 3d. CDL crop verification (`satellite/cdl.ts`)
+
+USDA Cropland Data Layer composition for any field boundary (CropScape
+clip, EPSG:5070, point-in-polygon at 30 m). Recorded on satellite FCRs as
+*additive* evidence ("USDA's own layer says this boundary was 94% corn in
+2023") and used to verify training patches. It deliberately does NOT mask
+the index statistics — that would change outputs under an unchanged
+methodology version, which the provenance discipline forbids. Per-pixel CDL
+masking is specced as methodology v1.1 (requires a version bump and
+re-observation).
+
 ## 4. Monte Carlo marketing engine (`marketing-mc.ts`)
 
 Per selling schedule, 4,000 simulated price worlds: futures follow
