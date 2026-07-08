@@ -32,6 +32,16 @@ export default async function DeadlinesPage() {
         lede="Pulled from RMA and FSA rules for your state and crops. Miss one and it costs real money — so they all live here, with what happens if you miss them."
       />
 
+      <div className="card p-4 mb-8 max-w-[860px] border-l-4 border-l-[var(--amber)]">
+        <p className="text-[13.5px] text-ink-soft">
+          <span className="label !text-[var(--amber)] mr-2">Verify before relying</span>
+          These dates are compiled from public RMA/FSA sources and haven&rsquo;t yet been
+          verified against the RMA Actuarial Information Browser for the {year} crop year.
+          Dates vary by county and can change — confirm anything binding with your crop-insurance
+          agent or county FSA office before you act on it.
+        </p>
+      </div>
+
       {/* standing obligations — the 72-hour rule deserves top billing */}
       {standing.map((r) => (
         <div key={r.id} className="card p-5 mb-8 border-l-4 border-l-forest">
