@@ -104,6 +104,10 @@ export const fieldConditionRecords = sqliteTable("field_condition_records", {
   analyzedAt: text("analyzed_at").notNull(),
   reviewedBy: text("reviewed_by"), // human sign-off; required for claim packets in Phase 1
   supersedes: text("supersedes"), // append-only corrections
+  // Sensor-fusion verdict (fusion@1.0.0): the honest state the platform is
+  // willing to stand behind — abstain | screening_only | screening_corroborated
+  // | field_measured_uncalibrated — plus per-tier status and reasons.
+  fusion: text("fusion", { mode: "json" }).$type<Record<string, unknown>>(),
 });
 
 /**

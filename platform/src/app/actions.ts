@@ -29,7 +29,9 @@ import {
   evaluateWeatherCounterpart,
   basisRiskGap,
   methodologyHash,
+  type WeatherCounterpart,
 } from "@/lib/parametric";
+import { fuse } from "@/lib/fusion";
 import type { GeoJSONPolygon } from "@/db/schema";
 
 const now = () => new Date().toISOString();
@@ -708,10 +710,38 @@ export async function analyzeClaimSatellite(claimId: string) {
     cdlNote = ` (CDL ${eventYear} not yet published — showing ${eventYear - 1})`;
   }
 
+  // Sensor fusion (fusion@1.0.0): compute the weather counterpart and fuse
+  // the tiers into the honest verdict the platform will stand behind. This
+  // runs whether or not satellite produced a record — an unavailable
+  // satellite result on a drought event still fuses to "abstain", and a
+  // drone-routed damage type (hail/flood) fuses to "abstain — drone required".
+  let weather: WeatherCounterpart | undefined;
+  try {
+    const ev = new Date(claim.eventDate);
+    const from = new Date(ev.getTime() - 20 * 864e5).toISOString().slice(0, 10);
+    const to = new Date(ev.getTime() + 20 * 864e5).toISOString().slice(0, 10);
+    weather = await evaluateWeatherCounterpart(field, from, to);
+  } catch {
+    /* weather optional — fusion treats it as unavailable */
+  }
+  const existingDrone = (
+    await db.select().from(t.fieldConditionRecords).where(eq(t.fieldConditionRecords.fieldId, field.id))
+  ).find((r) => r.modelName === "drone-rgb-exg" && claim.fcrIds.includes(r.id));
+  const fusion = fuse({
+    routedPrimary: routeSensors("claim_event", claim.damageType).primary,
+    damageType: claim.damageType,
+    satellite: assessment.ok ? assessment : { ok: false, reason: assessment.reason ?? "unavailable" },
+    drone: existingDrone
+      ? ({ ok: true, affectedFrac: (existingDrone.metrics.affected_frac as number) ?? 0, affectedAcres: existingDrone.affectedAcres ?? 0, severityPct: existingDrone.severityPct ?? 0, resolutionM: (existingDrone.metrics.effective_res_m as number) ?? 0 } as never)
+      : undefined,
+    weather,
+  });
+
   if (!assessment.ok) {
     // no fabricated record on failure — the reason is surfaced in the UI via audit trail
     await audit(op.id, "satellite_analysis_unavailable", "claim", claimId, {
       reason: assessment.reason,
+      fusionState: fusion.state,
     });
     revalidatePath(`/claims/${claimId}`);
     return;
@@ -787,11 +817,13 @@ export async function analyzeClaimSatellite(claimId: string) {
     analyzedAt: now(),
     reviewedBy: null,
     supersedes: claim.fcrIds.at(-1) ?? null,
+    fusion: fusion as unknown as Record<string, unknown>,
   });
   await audit(op.id, "fcr_emitted", "field_condition_record", fcrId, {
     claimId,
     model: `${model.name}@${model.version}`,
     significant: assessment.significant,
+    fusionState: fusion.state,
   });
   await appendProvenance(db, "field_condition_record", fcrId, "emitted", {
     claimId,
@@ -877,6 +909,11 @@ export async function ingestDroneOrtho(claimId: string, formData: FormData) {
   const season = claim.cropSeasonId
     ? (await db.select().from(t.cropSeasons).where(eq(t.cropSeasons.id, claim.cropSeasonId)))[0]
     : undefined;
+  const droneFusion = fuse({
+    routedPrimary: routeSensors("claim_event", claim.damageType).primary,
+    damageType: claim.damageType,
+    drone: a,
+  });
   const fcrId = id("fcr");
   await db.insert(t.fieldConditionRecords).values({
     id: fcrId,
@@ -901,6 +938,7 @@ export async function ingestDroneOrtho(claimId: string, formData: FormData) {
     analyzedAt: now(),
     reviewedBy: null,
     supersedes: null, // drone is an independent finer-resolution view, not a supersede of satellite
+    fusion: droneFusion as unknown as Record<string, unknown>,
   });
   await audit(op.id, "fcr_emitted", "field_condition_record", fcrId, {
     claimId, model: a.methodologyVersion, tier: "drone", validationStatus: a.validationStatus,

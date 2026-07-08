@@ -227,9 +227,30 @@ export default async function ClaimDetail({ params }: { params: Promise<{ id: st
             </p>
           ) : (
             <div className="card p-5">
+              {(() => {
+                const f = latest.fusion as
+                  | { state?: string; abstained?: boolean; reasons?: string[] }
+                  | null;
+                if (!f?.state) return null;
+                const label: Record<string, string> = {
+                  abstain: "Abstained — not claim-grade on its own",
+                  screening_only: "Screening only — needs corroboration or a drone capture",
+                  screening_corroborated: "Screening + weather corroborated",
+                  field_measured_uncalibrated: "Field-measured (drone) — magnitude real, confidence uncalibrated",
+                };
+                const tone = f.state === "abstain" ? "urgent" : f.state === "screening_corroborated" || f.state === "field_measured_uncalibrated" ? "strong" : "amber";
+                return (
+                  <div className={`mb-4 -mx-5 -mt-5 px-5 py-3 border-b border-ash ${f.state === "abstain" ? "bg-[var(--amber-tint)]" : "bg-[var(--forest-tint)]"}`}>
+                    <p className="label mb-1">Fusion verdict · fusion@1.0.0</p>
+                    <p className="text-[14px] font-medium">{label[f.state] ?? f.state}</p>
+                    {f.reasons?.[0] && <p className="text-[13px] text-ink-soft mt-1">{f.reasons[0]}</p>}
+                  </div>
+                );
+              })()}
               <div className="flex items-center gap-3 flex-wrap mb-4">
                 <Tag tone={latest.conditionClass}>{latest.conditionClass}</Tag>
                 {latest.modelName === "demo-analyzer" && <Tag tone="demo">Sample analysis</Tag>}
+                {latest.modelName === "drone-rgb-exg" && <Tag tone="amber">Uncalibrated pipeline</Tag>}
                 {latest.reviewedBy ? (
                   <Tag tone="strong">Human reviewed</Tag>
                 ) : (
@@ -239,7 +260,11 @@ export default async function ClaimDetail({ params }: { params: Promise<{ id: st
               <div className="grid grid-cols-2 gap-5 mb-4">
                 <Meta k="Severity" v={`${latest.severityPct}%`} />
                 <Meta k="Affected" v={`${latest.affectedAcres} ac`} sub={`of ${field.acres}`} />
-                <Meta k="Confidence" v={`${Math.round(latest.confidence * 100)}%`} />
+                <Meta
+                  k="Confidence"
+                  v={latest.confidence > 0 ? `${Math.round(latest.confidence * 100)}%` : "—"}
+                  sub={latest.confidence > 0 ? "heuristic, not calibrated" : "not yet calibrated"}
+                />
                 <Meta k="Growth stage" v={latest.growthStage ?? "—"} />
               </div>
               {latest.narrative && (
