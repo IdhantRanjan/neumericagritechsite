@@ -312,6 +312,135 @@ export const marketingPlanTargets = sqliteTable("marketing_plan_targets", {
   createdAt: text("created_at").notNull(),
 });
 
+// ————— Accounts & auth (magic-link primary, optional password fallback) —————
+
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull().unique(), // stored lowercased
+  name: text("name"),
+  // scrypt hash "scrypt:N:r:p:salt:hash" — null means magic-link-only account
+  passwordHash: text("password_hash"),
+  emailVerifiedAt: text("email_verified_at"),
+  createdAt: text("created_at").notNull(),
+});
+
+/** A user's role inside one operation. Every page/mutation is role-scoped. */
+export const memberships = sqliteTable(
+  "memberships",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id),
+    operationId: text("operation_id").notNull().references(() => operations.id),
+    // owner: full control · member: day-to-day writes · advisor: read + notes
+    // partner: reserved lender/co-op read-only channel (tenant-isolated)
+    role: text("role").notNull().default("member"),
+    invitedBy: text("invited_by"),
+    createdAt: text("created_at").notNull(),
+  },
+  (m) => [uniqueIndex("membership_unique").on(m.userId, m.operationId)]
+);
+
+/**
+ * One-time tokens (magic links, invites, email changes, waitlist confirms).
+ * Only the sha256 of the token is stored — a DB leak can't mint sessions.
+ */
+export const authTokens = sqliteTable("auth_tokens", {
+  id: text("id").primaryKey(),
+  purpose: text("purpose").notNull(), // magic_link | invite | email_change | waitlist_confirm
+  tokenHash: text("token_hash").notNull().unique(),
+  email: text("email").notNull(),
+  userId: text("user_id"),
+  operationId: text("operation_id"),
+  role: text("role"), // for invites
+  meta: text("meta", { mode: "json" }).$type<Record<string, unknown>>(),
+  expiresAt: text("expires_at").notNull(),
+  consumedAt: text("consumed_at"),
+  createdAt: text("created_at").notNull(),
+});
+
+export const sessions = sqliteTable("sessions", {
+  id: text("id").primaryKey(),
+  tokenHash: text("token_hash").notNull().unique(),
+  userId: text("user_id").notNull().references(() => users.id),
+  createdAt: text("created_at").notNull(),
+  expiresAt: text("expires_at").notNull(),
+  lastSeenAt: text("last_seen_at"),
+  ip: text("ip"),
+  userAgent: text("user_agent"),
+  revokedAt: text("revoked_at"),
+});
+
+/** Per-account login audit log (also serves the auditability principle). */
+export const loginEvents = sqliteTable("login_events", {
+  id: text("id").primaryKey(),
+  userId: text("user_id"),
+  email: text("email").notNull(),
+  kind: text("kind").notNull(), // magic_link_sent|signin|signout|signout_all|password_set|password_failed|invite_accepted
+  ip: text("ip"),
+  userAgent: text("user_agent"),
+  at: text("at").notNull(),
+});
+
+// ————— Growth: waitlist + founder validation CRM —————
+
+export const waitlistSignups = sqliteTable("waitlist_signups", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  name: text("name"),
+  state: text("state"),
+  county: text("county"),
+  acres: text("acres"),
+  channel: text("channel").notNull().default("direct"), // direct | lender | agent | coop | other
+  // funnel: pending (needs email confirm) → confirmed → onboarded
+  status: text("status").notNull().default("pending"),
+  confirmedAt: text("confirmed_at"),
+  onboardedOperationId: text("onboarded_operation_id"),
+  notes: text("notes"),
+  createdAt: text("created_at").notNull(),
+});
+
+/** Founder validation pipeline — the real IL outreach, tracked. */
+export const crmContacts = sqliteTable("crm_contacts", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  org: text("org"),
+  county: text("county"),
+  kind: text("kind").notNull().default("farmer"), // farmer | lender | agent | extension | coop | other
+  source: text("source"), // farm_bureau | extension | il_farm_link | bounty_of_kane | cold | referral
+  stage: text("stage").notNull().default("identified"), // identified|contacted|replied|meeting|piloting|passed
+  email: text("email"),
+  phone: text("phone"),
+  nextAction: text("next_action"),
+  nextActionDate: text("next_action_date"),
+  notes: text("notes"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+// ————— Ops: rate limiting + background jobs —————
+
+/** Fixed-window rate limiting that works across serverless instances. */
+export const rateLimits = sqliteTable("rate_limits", {
+  key: text("key").primaryKey(), // e.g. "waitlist:1.2.3.4:2026-07-07T18"
+  count: integer("count").notNull().default(0),
+  windowStart: text("window_start").notNull(),
+});
+
+/** Long-running work (satellite scans/analyses) tracked out of the request. */
+export const jobs = sqliteTable("jobs", {
+  id: text("id").primaryKey(),
+  operationId: text("operation_id").notNull(),
+  kind: text("kind").notNull(), // satellite_scan | satellite_analysis
+  entityId: text("entity_id").notNull(), // fieldId or claimId
+  status: text("status").notNull().default("queued"), // queued|running|done|failed
+  progress: text("progress"), // human-readable step, e.g. "12/20 scenes"
+  result: text("result", { mode: "json" }).$type<Record<string, unknown>>(),
+  error: text("error"),
+  createdAt: text("created_at").notNull(),
+  startedAt: text("started_at"),
+  finishedAt: text("finished_at"),
+});
+
 // ————— Audit —————
 
 export const auditEvents = sqliteTable("audit_events", {
@@ -343,3 +472,9 @@ export type PolicyRef = typeof policyRefs.$inferSelect;
 export type Claim = typeof claims.$inferSelect;
 export type DeadlineInstance = typeof deadlineInstances.$inferSelect;
 export type ProgramMatch = typeof programMatches.$inferSelect;
+export type User = typeof users.$inferSelect;
+export type Membership = typeof memberships.$inferSelect;
+export type Session = typeof sessions.$inferSelect;
+export type WaitlistSignup = typeof waitlistSignups.$inferSelect;
+export type CrmContact = typeof crmContacts.$inferSelect;
+export type Job = typeof jobs.$inferSelect;

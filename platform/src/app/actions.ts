@@ -12,7 +12,8 @@ import { demoAnalyzer } from "@/lib/cv/demo-analyzer";
 import { primaryModelFor } from "@/lib/cv/registry";
 import { applicableRules } from "@/lib/rules/deadlines";
 import { matchPrograms, type OperationProfile } from "@/lib/rules/programs";
-import { requireOperation, WS_COOKIE } from "@/lib/current-op";
+import { requireWrite, requireAccess, canRecordOutcome, WS_COOKIE, OP_COOKIE } from "@/lib/current-op";
+import { resolveSession } from "@/lib/auth";
 import { scanField } from "@/lib/satellite/scan";
 import { ringAcres, ringToUtm, epsgForLngLat, approxRectBoundary } from "@/lib/satellite/geo";
 import { appendProvenance } from "@/lib/provenance";
@@ -152,27 +153,47 @@ export async function createOperation(formData: FormData) {
 
   await audit("onboarding", "operation_created", "operation", opId, { state, fields: names.length });
 
-  const jar = await cookies();
-  jar.set(WS_COOKIE, accessToken, {
-    httpOnly: true,
-    sameSite: "lax",
+  // Signed-in user creating a farm → owner membership (account-first path).
+  // Anonymous setup keeps the legacy private link and can claim later.
+  const sess = await resolveSession();
+  if (sess) {
+    await db
+      .insert(t.memberships)
+      .values({
+        id: id("mem"),
+        userId: sess.user.id,
+        operationId: opId,
+        role: "owner",
+        invitedBy: null,
+        createdAt: now(),
+      })
+      .onConflictDoNothing();
+  }
+
+  const cookieOpts = {
+    httpOnly: true as const,
+    sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",
     maxAge: 60 * 60 * 24 * 365,
     path: "/",
-  });
+  };
+  const jar = await cookies();
+  if (sess) jar.set(OP_COOKIE, opId, cookieOpts);
+  jar.set(WS_COOKIE, accessToken, cookieOpts);
   redirect("/settings?created=1");
 }
 
 export async function leaveWorkspace() {
   const jar = await cookies();
   jar.delete(WS_COOKIE);
+  jar.delete(OP_COOKIE);
   redirect("/welcome");
 }
 
 // ————— Pillar 1 —————
 
 export async function markDeadlineDone(deadlineId: string) {
-  const op = await requireOperation();
+  const { op } = await requireWrite();
   const db = await getDb();
   await db
     .update(t.deadlineInstances)
@@ -185,7 +206,7 @@ export async function markDeadlineDone(deadlineId: string) {
 
 export async function setProgramStatus(matchId: string, status: string) {
   if (!["new", "pursuing", "dismissed", "received"].includes(status)) return;
-  const op = await requireOperation();
+  const { op } = await requireWrite();
   const db = await getDb();
   await db
     .update(t.programMatches)
@@ -196,7 +217,7 @@ export async function setProgramStatus(matchId: string, status: string) {
 }
 
 export async function createClaim(formData: FormData) {
-  const op = await requireOperation();
+  const { op } = await requireWrite();
   const db = await getDb();
   const fieldId = String(formData.get("fieldId"));
   const damageType = String(formData.get("damageType"));
@@ -235,7 +256,7 @@ export async function createClaim(formData: FormData) {
  * (ingest → hash → capture record → analyzer → FCR with provenance).
  */
 export async function addEvidence(claimId: string, formData: FormData) {
-  const op = await requireOperation();
+  const { op } = await requireWrite();
   const db = await getDb();
   const claim = (
     await db.select().from(t.claims).where(and(eq(t.claims.id, claimId), eq(t.claims.operationId, op.id)))
@@ -365,7 +386,7 @@ export async function addEvidence(claimId: string, formData: FormData) {
 
 /** Human-review sign-off — Phase 1 gate before a packet is shareable. */
 export async function markFcrReviewed(fcrId: string, claimId: string) {
-  const op = await requireOperation();
+  const { op } = await requireWrite();
   const db = await getDb();
   const claim = (
     await db.select().from(t.claims).where(and(eq(t.claims.id, claimId), eq(t.claims.operationId, op.id)))
@@ -391,7 +412,7 @@ const num = (formData: FormData, key: string): number | null => {
 };
 
 export async function saveMarketingPosition(formData: FormData) {
-  const op = await requireOperation();
+  const { op } = await requireWrite();
   const db = await getDb();
   const crop = String(formData.get("crop") ?? "corn");
   const year = Number(formData.get("year") ?? new Date().getFullYear());
@@ -446,7 +467,7 @@ export async function saveMarketingPosition(formData: FormData) {
 }
 
 export async function addPlanTarget(positionId: string, formData: FormData) {
-  const op = await requireOperation();
+  const { op } = await requireWrite();
   const db = await getDb();
   const pos = (
     await db
@@ -477,7 +498,7 @@ export async function addPlanTarget(positionId: string, formData: FormData) {
 
 export async function setTargetStatus(targetId: string, status: string) {
   if (!["waiting", "acted", "dropped"].includes(status)) return;
-  const op = await requireOperation();
+  const { op } = await requireWrite();
   const db = await getDb();
   const target = (
     await db.select().from(t.marketingPlanTargets).where(eq(t.marketingPlanTargets.id, targetId))
@@ -499,7 +520,7 @@ export async function setTargetStatus(targetId: string, status: string) {
 
 /** Set a field boundary: paste a GeoJSON Polygon, or approximate from center + acres. */
 export async function setFieldBoundary(fieldId: string, formData: FormData) {
-  const op = await requireOperation();
+  const { op } = await requireWrite();
   const db = await getDb();
   const field = (
     await db.select().from(t.fields).where(and(eq(t.fields.id, fieldId), eq(t.fields.operationId, op.id)))
@@ -556,7 +577,7 @@ export async function setFieldBoundary(fieldId: string, formData: FormData) {
  * at a time so baselines accumulate.
  */
 export async function scanFieldAction(fieldId: string) {
-  const op = await requireOperation();
+  const { op } = await requireWrite();
   const db = await getDb();
   const field = (
     await db.select().from(t.fields).where(and(eq(t.fields.id, fieldId), eq(t.fields.operationId, op.id)))
@@ -587,7 +608,7 @@ export async function scanFieldAction(fieldId: string) {
  * for the exact scenes used, and provenance-chain entries for all of it.
  */
 export async function analyzeClaimSatellite(claimId: string) {
-  const op = await requireOperation();
+  const { op } = await requireWrite();
   const db = await getDb();
   const claim = (
     await db.select().from(t.claims).where(and(eq(t.claims.id, claimId), eq(t.claims.operationId, op.id)))
@@ -703,9 +724,14 @@ export async function analyzeClaimSatellite(claimId: string) {
   revalidatePath("/");
 }
 
-/** Record a confirmed real-world outcome — the ground-truth label flywheel. */
+/** Record a confirmed real-world outcome — the ground-truth label flywheel.
+ * Advisors (agronomist/agent) may record outcomes too — it's the one write
+ * their read-mostly role includes, because they're often the source. */
 export async function recordOutcome(claimId: string, formData: FormData) {
-  const op = await requireOperation();
+  const access = await requireAccess();
+  if (!canRecordOutcome(access))
+    throw new Error("The demo is read-only sample data. Set up your own farm at /setup.");
+  const op = access.op;
   const db = await getDb();
   const claim = (
     await db.select().from(t.claims).where(and(eq(t.claims.id, claimId), eq(t.claims.operationId, op.id)))
@@ -753,7 +779,7 @@ export async function recordOutcome(claimId: string, formData: FormData) {
  * definitions require a carrier partner (docs/DEPENDENCIES.md §5/§6).
  */
 export async function evaluateTriggerAction(fieldId: string, formData: FormData) {
-  const op = await requireOperation();
+  const { op } = await requireWrite();
   const db = await getDb();
   const field = (
     await db.select().from(t.fields).where(and(eq(t.fields.id, fieldId), eq(t.fields.operationId, op.id)))

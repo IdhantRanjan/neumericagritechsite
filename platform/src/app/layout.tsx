@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Playfair_Display, Inter, IBM_Plex_Mono } from "next/font/google";
 import Link from "next/link";
 import { Nav } from "@/components/nav";
-import { currentOperation } from "@/lib/current-op";
+import { currentAccess, canWrite } from "@/lib/current-op";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -37,7 +37,8 @@ export const viewport: Viewport = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const op = await currentOperation();
+  const access = await currentAccess();
+  const op = access?.op ?? null;
   return (
     <html
       lang="en"
@@ -52,7 +53,11 @@ export default async function RootLayout({
             </span>
           </div>
         )}
-        <Nav signedIn={!!op} />
+        <Nav
+          signedIn={!!op}
+          hasAccount={!!access?.user}
+          readOnly={!!access && !canWrite(access)}
+        />
         <main className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 pb-24 flex-1">
           {children}
         </main>
@@ -62,9 +67,20 @@ export default async function RootLayout({
             <span className="label">
               Decision support & documentation — not insurance, legal, or trading advice
             </span>
-            <Link href="https://neumeric.xyz" className="label hover:text-forest">
-              neumeric.xyz
-            </Link>
+            <span className="flex items-center gap-4">
+              <Link href="/legal/privacy" className="label hover:text-forest">
+                Privacy
+              </Link>
+              <Link href="/legal/terms" className="label hover:text-forest">
+                Terms
+              </Link>
+              <Link href="/trust" className="label hover:text-forest">
+                Security & trust
+              </Link>
+              <Link href="https://neumeric.xyz" className="label hover:text-forest">
+                neumeric.xyz
+              </Link>
+            </span>
           </div>
         </footer>
       </body>

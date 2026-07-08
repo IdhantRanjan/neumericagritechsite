@@ -36,6 +36,13 @@
       "when": 1783470667126,
       "tag": "0004_fcr_narrative",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1783475192408,
+      "tag": "0005_launch_auth_growth",
+      "breakpoints": true
     }
   ]
 }

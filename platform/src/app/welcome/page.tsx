@@ -36,10 +36,10 @@ export default async function WelcomePage({
       <div className="card p-5 mt-14 text-left">
         <p className="label mb-2">Already set up?</p>
         <p className="text-[14px] text-ink-soft">
-          Open the private workspace link you saved when you created your farm — it signs you
-          in on any device. Lost it? Email{" "}
-          <a href="mailto:idhantran@gmail.com" className="text-forest">the Neumeric team</a>{" "}
-          and we&rsquo;ll restore your access.
+          <Link href="/signin" className="text-forest underline">Sign in with your email</Link>{" "}
+          — we&rsquo;ll send you a one-time link, no password needed. Your saved private
+          workspace link keeps working too. Lost both? Email{" "}
+          <a href="mailto:idhantran@gmail.com" className="text-forest">the Neumeric team</a>.
         </p>
       </div>
 

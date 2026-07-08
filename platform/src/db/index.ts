@@ -35,7 +35,11 @@ async function init(): Promise<DB> {
     const { migrate } = await import("drizzle-orm/better-sqlite3/migrator");
     const dataDir = path.join(process.cwd(), ".data");
     fs.mkdirSync(dataDir, { recursive: true });
-    const sqlite = new Database(path.join(dataDir, "neumeric.db"));
+    const sqlite = new Database(
+      process.env.NEUMERIC_DB_FILE
+        ? path.resolve(process.env.NEUMERIC_DB_FILE)
+        : path.join(dataDir, "neumeric.db")
+    );
     sqlite.pragma("journal_mode = WAL");
     const sdb = drizzle(sqlite, { schema });
     migrate(sdb, { migrationsFolder: path.join(process.cwd(), "drizzle") });
