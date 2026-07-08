@@ -4,3 +4,7 @@
 [4/37] BOONE 2022 [control] quiet z=1.302 sev=0% conf=0.72 precip=0.98 [54s]
 [5/37] BOONE 2023 [stress_strong] FIRE z=-5.9724 sev=34% conf=0.73 precip=0.51 [61s]
 [6/37] BUREAU 2019 [control] FIRE z=-3.8426 sev=27% conf=0.95 precip=1.21 [54s]
+[7/37] BUREAU 2021 [control] FIRE z=-1.5862 sev=38% conf=0.73 precip=1.65 [64s]
+[8/37] BUREAU 2024 [control] FIRE z=-3.4795 sev=31% conf=0.95 precip=1.06 [60s]
+[9/37] CHAMPAIGN 2020 [control] quiet z=0.6214 sev=0% conf=0.6 precip=0.89 [38s]
+[10/37] CHAMPAIGN 2021 [control] FIRE z=-1.6722 sev=28% conf=0.78 precip=1.69 [29s]
