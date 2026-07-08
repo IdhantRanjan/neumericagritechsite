@@ -12,6 +12,49 @@ in the append-only provenance chain (§6). Same inputs ⇒ identical outputs.
 
 ---
 
+## 0. Sensor architecture & auto-routing (`platform/src/lib/sensors/routing.ts`)
+
+Three sensors at three scales feed **one** Field Condition Record schema —
+one pipeline, multiple ingestion paths. The platform picks the sensor from
+the *question*, by an explicit, versioned, logged rule (`sensor-routing@1.0.0`,
+hashed) — not an ML decision — because an insurer must be able to read *why*
+a given sensor produced a given number.
+
+| Tier | Resolution / cadence | Role | Cost |
+|---|---|---|---|
+| **Satellite** (Sentinel-2 L2A) | 10 m, ~5-day revisit, passive | Always-on monitoring & triage: drought/season-scale health, yield features, the trigger that flags "field 7 changed" | free, zero farm hardware |
+| **Drone** (farmer-operated) | 1–3 cm, on-demand | Claim-evidence quantification when damage features are smaller than a satellite pixel or decay faster than the revisit (hail strips, flood pockets) | farmer's own flight; Neumeric flies nothing |
+| **Phone** (farmer) | ground, on-demand | Corroboration in every packet + the ground-truth label channel for the flywheel | — |
+
+**Routing rule.** For `continuous_monitoring` / `yield_estimate` /
+`parametric_trigger` → satellite (field-scale, season-scale, inside 10 m and
+the revisit). For a `claim_event`, the rule reads the damage type's
+**physics** — characteristic feature scale and how fast evidence decays
+(`DAMAGE_PHYSICS` in the routing module) — and escalates to drone when the
+feature is sub-pixel (needs ≥2 px, i.e. <20 m) *or* decays in hours/days
+(outruns the ~8-day median clear revisit in IL summer). Drought → satellite
+suffices; hail/wind/flood → drone primary, with satellite as the independent
+wide-area cross-check and phone as ground corroboration. Every decision is
+written to `routing_decisions` (rule version + hash + rationale) and the
+audit log, and shown on the claim page. This is the concrete link between the
+§3c backtest finding (10 m can't resolve localized acute damage) and the
+product: the same physics that blinds the satellite is what *routes* those
+events to the drone tier.
+
+**Drone pipeline** (`lib/drone/analyze.ts`, `drone-rgb-exg@0.1.0`): ingests a
+georeferenced orthomosaic GeoTIFF (RGB → ExG, or RGB+NIR → NDVI), reprojects
+the field boundary into the raster CRS, samples on an analysis grid capped at
+0.5 m effective (cm detail is averaged down, never upsampled), and segments
+affected area vs the capture's *own* robust healthy statistics (median − 3·MAD
+AND below an absolute vegetation floor). Emits an FCR through the shared
+schema with real affected-area geometry. **Honesty status: the pipeline is
+deterministic and auditable but UNVALIDATED** — no real damage-labeled drone
+captures exist yet (that is exactly what Track B collects), so its FCR
+confidence is reported as **0 ("uncalibrated")**, never invented, and its
+within-capture segmentation says "this part of the field looks far worse than
+the rest of the same image" — it locates and sizes the anomaly; cause comes
+from the narrative, phone corroboration, and the satellite cross-check.
+
 ## 1. Satellite damage engine (`platform/src/lib/satellite/`)
 
 **Methodology `s2-l2a-cd@1.0.0`** — parameters in `methodology.ts`, pinned by

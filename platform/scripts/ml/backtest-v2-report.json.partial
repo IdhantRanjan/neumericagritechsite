@@ -103,5 +103,26 @@
   "weatherCorroborated": true,
   "reason": null,
   "secs": 61
+ },
+ {
+  "fips": "011",
+  "county": "BUREAU",
+  "year": 2019,
+  "stratum": "control",
+  "eventDate": "2019-07-05",
+  "rmaDroughtIndem": 45223,
+  "ok": true,
+  "significant": true,
+  "fieldZ": -3.8426,
+  "severityPct": 27,
+  "affectedFrac": 1,
+  "confidence": 0.95,
+  "extent": "region-wide",
+  "persistence": "persistent",
+  "clearFracPost": 1,
+  "precipRatio": 1.21,
+  "weatherCorroborated": false,
+  "reason": null,
+  "secs": 54
  }
 ]
