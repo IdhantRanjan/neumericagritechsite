@@ -1,0 +1,247 @@
+{
+  "ranAt": "2026-07-08T07:06:55.698Z",
+  "design": "Same-county CDL-verified corn patches; production detectDamage(); stress season (2023-06-20, documented IL flash drought) vs control (2021-06-20, near-normal). Patch locations from extract-features.ts (deterministic).",
+  "stress2023": {
+    "assessed": 8,
+    "flaggedDamage": 0,
+    "fireRate": 0,
+    "meanSeverityWhenFired": null
+  },
+  "control2021": {
+    "assessed": 8,
+    "flaggedDamage": 2,
+    "fireRate": 0.25,
+    "meanSeverityWhenFired": 40
+  },
+  "limitations": [
+    "Patch-level, not farmer-field-level; ~25-acre rectangles, not real boundaries.",
+    "No per-field ground-truth labels exist yet \u2014 this tests discrimination between a documented stress season and a quiet one, not absolute accuracy.",
+    "2023 drought severity varied across IL; some sampled counties were less affected, so <100% fire rate in 2023 is expected and honest.",
+    "Corroborating public record: USDA reported drought as the dominant 2023 IL cause of loss (RMA cause-of-loss files) \u2014 regional consistency, not field validation."
+  ],
+  "results": [
+    {
+      "year": 2023,
+      "county": "BOONE",
+      "fips": "007",
+      "ok": true,
+      "significant": false,
+      "severityPct": 42,
+      "confidence": 0.74,
+      "extent": "none",
+      "persistence": "transient",
+      "reason": null,
+      "secs": 51
+    },
+    {
+      "year": 2023,
+      "county": "BUREAU",
+      "fips": "011",
+      "ok": true,
+      "significant": false,
+      "severityPct": 33,
+      "confidence": 0.76,
+      "extent": "none",
+      "persistence": "transient",
+      "reason": null,
+      "secs": 61
+    },
+    {
+      "year": 2023,
+      "county": "CHAMPAIGN",
+      "fips": "019",
+      "ok": true,
+      "significant": false,
+      "severityPct": 0,
+      "confidence": 0.73,
+      "extent": "none",
+      "persistence": "transient",
+      "reason": null,
+      "secs": 32
+    },
+    {
+      "year": 2023,
+      "county": "DE KALB",
+      "fips": "037",
+      "ok": true,
+      "significant": false,
+      "severityPct": 40,
+      "confidence": 0.67,
+      "extent": "none",
+      "persistence": "transient",
+      "reason": null,
+      "secs": 60
+    },
+    {
+      "year": 2023,
+      "county": "FORD",
+      "fips": "053",
+      "ok": true,
+      "significant": false,
+      "severityPct": 0,
+      "confidence": 0.54,
+      "extent": "none",
+      "persistence": "transient",
+      "reason": null,
+      "secs": 35
+    },
+    {
+      "year": 2023,
+      "county": "KANE",
+      "fips": "089",
+      "ok": true,
+      "significant": false,
+      "severityPct": 0,
+      "confidence": 0.59,
+      "extent": "none",
+      "persistence": "transient",
+      "reason": null,
+      "secs": 61
+    },
+    {
+      "year": 2023,
+      "county": "HENRY",
+      "fips": "073",
+      "ok": true,
+      "significant": false,
+      "severityPct": 43,
+      "confidence": 0.7,
+      "extent": "none",
+      "persistence": "transient",
+      "reason": null,
+      "secs": 38
+    },
+    {
+      "year": 2023,
+      "county": "KENDALL",
+      "fips": "093",
+      "ok": true,
+      "significant": false,
+      "severityPct": 0,
+      "confidence": 0.55,
+      "extent": "none",
+      "persistence": "transient",
+      "reason": null,
+      "secs": 27
+    },
+    {
+      "year": 2021,
+      "county": "BOONE",
+      "fips": "007",
+      "ok": true,
+      "significant": true,
+      "severityPct": 45,
+      "confidence": 0.83,
+      "extent": "region-wide",
+      "persistence": "transient",
+      "reason": null,
+      "secs": 76
+    },
+    {
+      "year": 2021,
+      "county": "BUREAU",
+      "fips": "011",
+      "ok": true,
+      "significant": false,
+      "severityPct": 27,
+      "confidence": 0.36,
+      "extent": "none",
+      "persistence": "unconfirmed",
+      "reason": null,
+      "secs": 47
+    },
+    {
+      "year": 2021,
+      "county": "CHAMPAIGN",
+      "fips": "019",
+      "ok": true,
+      "significant": false,
+      "severityPct": 32,
+      "confidence": 0.61,
+      "extent": "none",
+      "persistence": "unconfirmed",
+      "reason": null,
+      "secs": 43
+    },
+    {
+      "year": 2021,
+      "county": "DE KALB",
+      "fips": "037",
+      "ok": true,
+      "significant": false,
+      "severityPct": 0,
+      "confidence": 0.71,
+      "extent": "none",
+      "persistence": "transient",
+      "reason": null,
+      "secs": 52
+    },
+    {
+      "year": 2021,
+      "county": "FORD",
+      "fips": "053",
+      "ok": true,
+      "significant": false,
+      "severityPct": 0,
+      "confidence": 0.7,
+      "extent": "none",
+      "persistence": "unconfirmed",
+      "reason": null,
+      "secs": 28
+    },
+    {
+      "year": 2021,
+      "county": "HENRY",
+      "fips": "073",
+      "ok": true,
+      "significant": true,
+      "severityPct": 34,
+      "confidence": 0.59,
+      "extent": "localized",
+      "persistence": "unconfirmed",
+      "reason": null,
+      "secs": 36
+    },
+    {
+      "year": 2021,
+      "county": "KANE",
+      "fips": "089",
+      "ok": true,
+      "significant": false,
+      "severityPct": 28,
+      "confidence": 0.51,
+      "extent": "none",
+      "persistence": "unconfirmed",
+      "reason": null,
+      "secs": 45
+    },
+    {
+      "year": 2021,
+      "county": "KENDALL",
+      "fips": "093",
+      "ok": true,
+      "significant": false,
+      "severityPct": 0,
+      "confidence": 0.78,
+      "extent": "none",
+      "persistence": "unconfirmed",
+      "reason": null,
+      "secs": 37
+    }
+  ],
+  "interpretation": {
+    "headline": "The engine did NOT discriminate at patch level in this design: 0/8 fired in the 2023 drought season, 2/8 fired in the 2021 'control'. Reported as-is.",
+    "readings": [
+      "Severity magnitudes moved the right way in 2023 (Boone 42, DeKalb 40, Henry 43, Bureau 33 \u2014 vs the single-field proof's 62 on a real DeKalb boundary), but crossed the significance gate in none \u2014 the gate is conservative for region-wide events on thin/contaminated baselines.",
+      "Likely baseline contamination: patches were selected as corn IN THE EVENT YEAR; under IL corn/soy rotation many were soybeans in baseline years, so the 'field's own history' the engine compares against is a different crop with a different mid-June NDVI \u2014 depressing the expected value and hiding the drought drop. Real farmer fields carry crop-season records; random patches don't.",
+      "2021 was not a clean control in far-north IL: Boone/Henry (the two 2021 fires) sat in the real June-2021 northern-Illinois dry spell (USDM D1-D2). The 'false positives' may be true positives against a mislabeled control.",
+      "The earlier single-field proof (Home 80, DeKalb, real boundary, 4 scanned seasons) detected the same 2023 event: significant=true, severity 62%, confidence 0.95 \u2014 the engine performs on the data shape it was designed for."
+    ],
+    "actions": [
+      "Do not tune detection thresholds to make this backtest pass (that is overfitting to the test and would require a methodology version bump).",
+      "Re-run with rotation-consistent patches: require the SAME crop in event AND baseline years via CDL (methodology-neutral change to the test, not the engine).",
+      "Pick a cleaner control (2021 central/southern IL only, or 2020).",
+      "The definitive measurement remains field-level adjuster-graded labels from the flywheel."
+    ]
+  }
+}

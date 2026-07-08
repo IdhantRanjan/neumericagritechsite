@@ -142,13 +142,24 @@ field-level harvested-yield labels.
 ### 3c. Damage-detection backtest (`scripts/ml/backtest-damage.ts`)
 
 Discrimination test on the production engine: same-county CDL-verified corn
-patches, 2023-06-20 (documented IL flash drought) vs 2021-06-20 (near-normal
-control). Results in `scripts/ml/backtest-report.json`. What it measures:
-whether the engine separates a documented stress season from a quiet one at
-patch level. What it cannot measure (stated in the report): field-level
-false-positive/negative rates — those need adjuster-graded labels, which is
-what the §2 flywheel collects. Public corroboration only (RMA cause-of-loss
-shows drought dominating 2023 IL) — regional consistency, not validation.
+patches, 2023-06-20 (documented IL flash drought) vs 2021-06-20 (intended
+control). Results in `scripts/ml/backtest-report.json`.
+
+**Result, reported as-is: the test did not pass.** 0/8 stress-year patches
+crossed the significance gate (severity magnitudes moved the right way —
+33–43% on the hit counties — but none were ruled significant); 2/8 fired in
+the "control" year. Two design flaws in the test itself are the leading
+explanations, documented in the report: (1) rotation contamination — patches
+were corn in the event year but often soybeans in baseline years, so the
+"field's own history" baseline is a different crop; (2) 2021 was not a clean
+control in far-north IL (the two 2021 fires sit inside the real June-2021
+northern-IL dry spell). The single-field proof on a real boundary with four
+scanned seasons (docs/examples/) detected the same event at severity 62%,
+confidence 0.95. Deliberate decision: detection thresholds were NOT tuned to
+make the backtest pass — that would overfit the test and require a
+methodology version bump. Next steps are in the report (rotation-consistent
+patches, cleaner control year); the definitive measurement remains
+field-level adjuster-graded labels from the §2 flywheel.
 
 ### 3d. CDL crop verification (`satellite/cdl.ts`)
 
