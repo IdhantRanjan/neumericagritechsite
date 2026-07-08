@@ -448,3 +448,60 @@ em, .italic { font-style: italic; }
   * { animation: none !important; transition: none !important; scroll-behavior: auto; }
   .reveal { opacity: 1; transform: none; }
 }
+
+
+/* ============ proof section (real 2023 drought data) ============ */
+.proof-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 24px; margin-top: 40px; }
+.proof-card {
+  background: #fffdfa; border: 1px solid var(--line, #e8e0d3); border-radius: 8px;
+  padding: 22px; margin: 0;
+}
+.proof-card figcaption { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.proof-card figcaption strong { font-family: var(--font-display); font-size: 19px; font-weight: 500; }
+.mono-tag {
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.12em;
+  color: var(--forest, #1a7a37);
+}
+.svg-mono { font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: 0.08em; }
+.proof-note { font-size: 13px; color: var(--ink-soft, #575049); margin-top: 12px; line-height: 1.55; }
+.proof-verdict { display: flex; flex-direction: column; gap: 12px; }
+.verdict-line { font-family: var(--font-display); font-size: 26px; font-weight: 500; color: #14120e; }
+.verdict-facts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.verdict-facts li {
+  display: flex; justify-content: space-between; gap: 12px; font-size: 13.5px;
+  border-bottom: 1px solid var(--line, #e8e0d3); padding-bottom: 8px;
+}
+.verdict-facts li span { color: var(--ink-soft, #575049); }
+.verdict-facts li b { font-weight: 500; text-align: right; }
+
+/* NDVI line draws itself in when revealed */
+.ndvi-line { stroke-dasharray: 1400; stroke-dashoffset: 1400; }
+.reveal.in .ndvi-line { animation: ndvi-draw 2.2s cubic-bezier(.3,.6,.3,1) forwards .3s; }
+@keyframes ndvi-draw { to { stroke-dashoffset: 0; } }
+.crash-dot { opacity: 0; }
+.reveal.in .crash-dot { animation: crash-pop .5s ease forwards 1.9s; }
+@keyframes crash-pop { from { opacity: 0; r: 12; } to { opacity: 1; r: 6; } }
+
+/* basis-risk block */
+.basis-block { display: grid; grid-template-columns: 1fr 1.4fr; gap: 40px; align-items: center; margin-top: 56px; }
+.basis-fig { margin: 0; display: flex; flex-direction: column; gap: 14px; }
+.basis-row {
+  display: grid; grid-template-columns: 150px 1fr auto; gap: 14px; align-items: center;
+  background: #fffdfa; border: 1px solid var(--line, #e8e0d3); border-radius: 8px; padding: 14px 18px;
+}
+.basis-row svg { width: 100%; height: 54px; }
+.basis-verdict { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.1em; white-space: nowrap; }
+.basis-verdict--no { color: #8a8378; }
+.basis-verdict--yes { color: var(--forest, #1a7a37); }
+.basis-line-a, .basis-line-b { stroke-dasharray: 500; stroke-dashoffset: 500; }
+.reveal.in .basis-line-a { animation: ndvi-draw 1.6s ease forwards .2s; }
+.reveal.in .basis-line-b { animation: ndvi-draw 1.6s ease forwards .5s; }
+
+@media (max-width: 900px) {
+  .proof-grid, .basis-block { grid-template-columns: 1fr; }
+  .basis-row { grid-template-columns: 1fr; gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ndvi-line, .basis-line-a, .basis-line-b { stroke-dashoffset: 0; animation: none; }
+  .crash-dot { opacity: 1; animation: none; }
+}

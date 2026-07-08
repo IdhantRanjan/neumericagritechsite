@@ -217,6 +217,92 @@
 
   <hr class="rule" />
 
+  <!-- ============================ PROOF: REAL DETECTION ============================ -->
+  <section class="section" id="proof">
+    <div class="wrap">
+      <div class="opener reveal">
+        <span class="eyebrow">Not a mockup</span>
+        <h2 class="h1">A real field. A real drought.<br><em class="accent">Detected.</em></h2>
+        <p class="lead">Below is actual Sentinel-2 satellite data over a 78-acre DeKalb County, Illinois corn field through the June 2023 flash drought — and what our change-detection engine concluded from it.</p>
+      </div>
+
+      <div class="proof-grid">
+        <figure class="proof-card reveal" aria-label="Chart of real NDVI satellite readings over a DeKalb County field in 2023, showing a sharp drop below the field's own multi-year baseline during the June flash drought">
+          <figcaption>
+            <span class="mono-tag">SENTINEL-2 · NDVI · MAY–JUL 2023</span>
+            <strong>The field, measured every few days</strong>
+          </figcaption>
+          <svg viewBox="0 0 600 300" preserveAspectRatio="xMidYMid meet" role="img">
+            <!-- expected band: this field's own 2020-22 baseline for this week, mean ± 1 sigma -->
+            <rect x="50" y="34.1" width="510" height="88.4" fill="#1a7a37" opacity="0.08"/>
+            <line x1="50" y1="78.3" x2="560" y2="78.3" stroke="#1a7a37" stroke-width="1" stroke-dasharray="5 5" opacity="0.5"/>
+            <text x="556" y="72" text-anchor="end" class="svg-mono" fill="#1a7a37" opacity="0.8">FIELD'S OWN 3-YR BASELINE</text>
+            <!-- axes -->
+            <line x1="50" y1="260" x2="560" y2="260" stroke="#cdd9c6" stroke-width="1.5"/>
+            <text x="161" y="281" text-anchor="middle" class="svg-mono" fill="#8a8378">JUN 1</text>
+            <text x="313" y="281" text-anchor="middle" class="svg-mono" fill="#8a8378">JUN 20</text>
+            <text x="400" y="281" text-anchor="middle" class="svg-mono" fill="#8a8378">JUL 1</text>
+            <!-- event marker -->
+            <line x1="313" y1="34" x2="313" y2="260" stroke="#b3542e" stroke-width="1" stroke-dasharray="3 4" opacity="0.7"/>
+            <text x="319" y="46" class="svg-mono" fill="#b3542e">DROUGHT PEAK</text>
+            <!-- the real series -->
+            <polyline class="ndvi-line" points="65.9,115.8 89.8,120.8 105.8,114.7 145.6,139.5 169.6,139.5 185.5,109.2 209.4,118.6 225.3,124.6 249.2,124.1 265.2,146.1 289.1,113.1 344.9,135.1 368.8,219.8 448.5,134.5 464.4,124.1 504.3,74.0 528.2,66.3 544.1,81.2"
+              fill="none" stroke="#1a7a37" stroke-width="2"/>
+            <g fill="#14532d">
+              <circle cx="65.9" cy="115.8" r="3"/><circle cx="89.8" cy="120.8" r="3"/><circle cx="105.8" cy="114.7" r="3"/><circle cx="145.6" cy="139.5" r="3"/><circle cx="169.6" cy="139.5" r="3"/><circle cx="185.5" cy="109.2" r="3"/><circle cx="209.4" cy="118.6" r="3"/><circle cx="225.3" cy="124.6" r="3"/><circle cx="249.2" cy="124.1" r="3"/><circle cx="265.2" cy="146.1" r="3"/><circle cx="289.1" cy="113.1" r="3"/><circle cx="344.9" cy="135.1" r="3"/><circle cx="448.5" cy="134.5" r="3"/><circle cx="464.4" cy="124.1" r="3"/><circle cx="504.3" cy="74.0" r="3"/><circle cx="528.2" cy="66.3" r="3"/><circle cx="544.1" cy="81.2" r="3"/>
+            </g>
+            <!-- the crash reading -->
+            <circle class="crash-dot" cx="368.8" cy="219.8" r="6" fill="#b3542e"/>
+            <text x="378" y="232" class="svg-mono" fill="#b3542e">JUN 27 · NDVI 0.205</text>
+          </svg>
+          <p class="proof-note">Every dot is one real satellite pass (scene IDs on file). The shaded band is this field's <em>own</em> 2020–2022 range for the same calendar week.</p>
+        </figure>
+
+        <div class="proof-card proof-verdict reveal" aria-label="The engine's conclusion from that data">
+          <span class="mono-tag">ENGINE OUTPUT · METHODOLOGY s2-l2a-cd@1.0.0</span>
+          <strong class="verdict-line">Damaged &middot; severity 62%</strong>
+          <ul class="verdict-facts">
+            <li><span>Confidence</span><b>0.95</b></li>
+            <li><span>Field NDVI drop</span><b>&minus;0.19 vs its own baseline</b></li>
+            <li><span>Extent</span><b>region-wide (neighbors dropped too)</b></li>
+            <li><span>Persistence</span><b>confirmed on later passes</b></li>
+          </ul>
+          <p class="proof-note">Deterministic and reproducible: the same public scenes under the same methodology version produce this exact record — which is what makes it evidence rather than an opinion.</p>
+        </div>
+      </div>
+
+      <div class="basis-block reveal">
+        <div class="basis-copy">
+          <span class="eyebrow">Why field-level truth matters</span>
+          <h3 class="h3">The index said fine.<br>The field said flooded.</h3>
+          <p>Index-only parametric insurance pays on a regional weather number — rainfall at an airport thirty miles away. When damage is local, the index misses it and the farmer eats the gap. That gap has a name: <strong>basis risk</strong>. Anchoring the trigger to imagery of the insured field itself is how it closes.</p>
+        </div>
+        <figure class="basis-fig" aria-label="Illustration of basis risk: a regional weather index staying above its payout threshold while the actual field's condition collapses below it">
+          <div class="basis-row">
+            <span class="mono-tag">REGIONAL WEATHER INDEX</span>
+            <svg viewBox="0 0 420 70" preserveAspectRatio="none" role="img">
+              <line x1="0" y1="52" x2="420" y2="52" stroke="#b3542e" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
+              <path class="basis-line-a" d="M0,30 C40,24 70,36 110,30 S180,22 220,30 S300,38 340,28 S400,26 420,30" fill="none" stroke="#8a8378" stroke-width="2"/>
+              <text x="416" y="64" text-anchor="end" class="svg-mono" fill="#b3542e">PAYOUT TRIGGER</text>
+            </svg>
+            <span class="basis-verdict basis-verdict--no">NO PAYOUT</span>
+          </div>
+          <div class="basis-row">
+            <span class="mono-tag">THE ACTUAL FIELD</span>
+            <svg viewBox="0 0 420 70" preserveAspectRatio="none" role="img">
+              <line x1="0" y1="52" x2="420" y2="52" stroke="#b3542e" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
+              <path class="basis-line-b" d="M0,26 C50,22 90,28 130,26 S200,30 230,40 C250,48 270,60 310,62 S390,60 420,58" fill="none" stroke="#1a7a37" stroke-width="2"/>
+            </svg>
+            <span class="basis-verdict basis-verdict--yes">VERIFIED LOSS</span>
+          </div>
+          <p class="proof-note">Illustration of the mechanism — the chart above it is the real data.</p>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule" />
+
   <!-- ============================ WHY DIFFERENT ============================ -->
   <section class="section">
     <div class="wrap">
