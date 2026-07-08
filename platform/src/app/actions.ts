@@ -16,6 +16,7 @@ import { matchPrograms, type OperationProfile } from "@/lib/rules/programs";
 import { requireWrite, requireAccess, canRecordOutcome, WS_COOKIE, OP_COOKIE } from "@/lib/current-op";
 import { resolveSession } from "@/lib/auth";
 import { scanField } from "@/lib/satellite/scan";
+import { cdlComposition } from "@/lib/satellite/cdl";
 import { ringAcres, ringToUtm, epsgForLngLat, approxRectBoundary } from "@/lib/satellite/geo";
 import { appendProvenance } from "@/lib/provenance";
 import { putObject } from "@/lib/storage";
@@ -660,6 +661,17 @@ export async function analyzeClaimSatellite(claimId: string) {
   const model = primaryModelFor(op.isDemo);
   const assessment = await model.assess(db, field, claim.eventDate);
 
+  // USDA CDL crop verification — additive evidence ("the USDA's own layer
+  // says this boundary was X% corn that season"). CDL for a year publishes
+  // the following winter, so a current-season event falls back to last year.
+  const eventYear = Number(claim.eventDate.slice(0, 4));
+  let cdl = field.boundary ? await cdlComposition(field.boundary, eventYear) : null;
+  let cdlNote = "";
+  if (!cdl && field.boundary) {
+    cdl = await cdlComposition(field.boundary, eventYear - 1);
+    cdlNote = ` (CDL ${eventYear} not yet published — showing ${eventYear - 1})`;
+  }
+
   if (!assessment.ok) {
     // no fabricated record on failure — the reason is surfaced in the UI via audit trail
     await audit(op.id, "satellite_analysis_unavailable", "claim", claimId, {
@@ -723,8 +735,13 @@ export async function analyzeClaimSatellite(claimId: string) {
       significant: assessment.significant ? 1 : 0,
       extent_localized: assessment.extent === "localized" ? 1 : 0,
       persistence_persistent: assessment.persistence === "persistent" ? 1 : 0,
+      ...(cdl ? { cdl_dominant_fraction: cdl.dominantFraction, cdl_year: cdl.year } : {}),
     },
-    narrative: assessment.narrative,
+    narrative:
+      assessment.narrative +
+      (cdl
+        ? ` USDA Cropland Data Layer (${cdl.year}) classifies ${Math.round(cdl.dominantFraction * 100)}% of this boundary as ${cdl.dominant}${cdlNote}.`
+        : ""),
     confidence: assessment.confidence,
     captureIds,
     imagerySha256: sceneHashes,
@@ -753,6 +770,7 @@ export async function analyzeClaimSatellite(claimId: string) {
       metrics: assessment.metrics,
       trace: assessment.trace,
     },
+    cdl,
   });
 
   await db

@@ -1,0 +1,13 @@
+{
+  "version": "untrained-placeholder",
+  "crop": "corn",
+  "region": "IL",
+  "features": ["ndviIntegral", "ndviPeak", "ndviMid", "ndviLate", "peakDoy", "coverage"],
+  "mu": [0, 0, 0, 0, 0, 0],
+  "sd": [1, 1, 1, 1, 1, 1],
+  "metrics": { "rmse_bu_ac": 0, "mae_bu_ac": 0, "note": "PLACEHOLDER — no trained model in this build; inference refuses to run" },
+  "n_samples": 0,
+  "type": "ridge",
+  "coef": [0, 0, 0, 0, 0, 0],
+  "intercept": 0
+}
