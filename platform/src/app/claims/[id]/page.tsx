@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireOperation } from "@/lib/current-op";
+import { requireAccess, canWrite, canRecordOutcome } from "@/lib/current-op";
+import { GuidedCapture } from "@/components/guided-capture";
 import {
   getClaim,
   getField,
@@ -25,7 +26,9 @@ const fmt = (iso: string) =>
 
 export default async function ClaimDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const op = await requireOperation();
+  const access = await requireAccess();
+  const op = access.op;
+  const writable = canWrite(access);
   const claim = await getClaim(id, op.id);
   if (!claim) notFound();
   const field = await getField(claim.fieldId, op.id);
@@ -94,7 +97,7 @@ export default async function ClaimDetail({ params }: { params: Promise<{ id: st
             )}
           </ul>
 
-          {!op.isDemo && (
+          {!op.isDemo && writable && (
             <form action={analyzeClaimSatellite.bind(null, claim.id)} className="card p-5 no-print border-l-4 border-l-forest mb-5">
               <p className="label mb-1">Satellite analysis — primary evidence path</p>
               <p className="text-[13.5px] text-ink-soft mb-3 max-w-[380px]">
@@ -113,19 +116,22 @@ export default async function ClaimDetail({ params }: { params: Promise<{ id: st
             </form>
           )}
 
-          <form action={addEvidence.bind(null, claim.id)} className="card p-5 space-y-4 no-print">
-            <p className="label">Add photo evidence{op.isDemo ? " & run demo analysis" : ""}</p>
-            <input type="file" name="photo" accept="image/*" className="text-[14px]" />
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-[13px] text-ink-soft max-w-[300px]">
-                {op.isDemo
-                  ? "No photo handy? Submit empty to ingest a labeled sample capture and see the pipeline run."
-                  : "Photos are hashed and stored content-addressed; geotag enforcement lands with the guided capture flow."}
+          {op.isDemo ? (
+            <div className="card p-5 space-y-3 no-print">
+              <p className="label">Photo evidence — demo</p>
+              <p className="text-[13px] text-ink-soft max-w-[380px]">
+                The demo is read-only sample data, so uploads are disabled here. On a real farm
+                this is a guided four-shot capture flow (wide, mid-field, close-up, worst spot)
+                with GPS stamped at shutter time.{" "}
+                <Link href="/setup" className="text-forest underline">Set up your farm</Link> to
+                use it.
               </p>
-              <button type="submit" className="pill">{op.isDemo ? "Analyze" : "Attach photo"}</button>
             </div>
-          </form>
+          ) : (
+            <GuidedCapture claimId={claim.id} disabled={!writable} />
+          )}
 
+          {canRecordOutcome(access) && (
           <div className="card p-5 mt-5 no-print">
             <p className="label mb-1">Actual outcome (ground truth)</p>
             <p className="text-[13px] text-ink-soft mb-3 max-w-[380px]">
@@ -164,6 +170,7 @@ export default async function ClaimDetail({ params }: { params: Promise<{ id: st
               <button type="submit" className="pill pill--sm">Record</button>
             </form>
           </div>
+          )}
         </section>
 
         <section>
@@ -210,7 +217,7 @@ export default async function ClaimDetail({ params }: { params: Promise<{ id: st
                   {latest.imagerySha256.length === 1 ? "" : "es"} · analyzed {fmt(latest.analyzedAt)}
                 </p>
               </div>
-              {!latest.reviewedBy && (
+              {!latest.reviewedBy && writable && (
                 <form action={markFcrReviewed.bind(null, latest.id, claim.id)} className="mt-4 no-print">
                   <button type="submit" className="pill pill--sm">
                     Sign off review → packet ready

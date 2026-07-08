@@ -299,13 +299,20 @@ export async function addEvidence(claimId: string, formData: FormData) {
     bytes = 3_800_000;
   }
 
+  // geotag from the guided capture flow (device GPS at shutter time)
+  const lat = num(formData, "lat");
+  const lng = num(formData, "lng");
+  const accuracy = num(formData, "accuracy");
+  const shotLabel = String(formData.get("shotLabel") ?? "").slice(0, 40) || null;
+  const geotagged = lat != null && lng != null && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
+
   await db.insert(t.imageryCaptures).values({
     id: captureId,
     fieldId: claim.fieldId,
     source: "phone",
     capturedAt: now(),
-    lat: null, // Phase 1: guided capture flow enforces GPS + timestamp
-    lng: null,
+    lat: geotagged ? lat : null,
+    lng: geotagged ? lng : null,
     fileName,
     sha256,
     bytes,
@@ -313,7 +320,12 @@ export async function addEvidence(claimId: string, formData: FormData) {
     storageBackend,
     uploadedBy: op.id,
     uploadedAt: now(),
-    metadata: file && file.size > 0 ? { origin: "upload" } : { origin: "synthesized sample" },
+    metadata: {
+      ...(file && file.size > 0 ? { origin: "upload" } : { origin: "synthesized sample" }),
+      ...(shotLabel ? { shot: shotLabel } : {}),
+      ...(geotagged && accuracy != null ? { gpsAccuracyM: accuracy } : {}),
+      geotag: geotagged ? "device-gps-at-capture" : "none",
+    },
   });
   await appendProvenance(db, "imagery_capture", captureId, "ingested", {
     claimId,

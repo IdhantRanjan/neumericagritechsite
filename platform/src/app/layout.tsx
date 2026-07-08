@@ -45,6 +45,12 @@ export default async function RootLayout({
       className={`${playfair.variable} ${inter.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-cream focus:border focus:border-forest focus:rounded-[60px] focus:px-4 focus:py-2 label"
+        >
+          Skip to content
+        </a>
         {op?.isDemo && (
           <div className="no-print bg-[var(--forest-tint)] border-b border-ash px-4 py-1.5 text-center">
             <span className="label !text-forest-ink">
@@ -58,7 +64,7 @@ export default async function RootLayout({
           hasAccount={!!access?.user}
           readOnly={!!access && !canWrite(access)}
         />
-        <main className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 pb-24 flex-1">
+        <main id="main" className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 pb-24 flex-1">
           {children}
         </main>
         <footer className="no-print border-t border-ash py-6">
