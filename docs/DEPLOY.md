@@ -2,9 +2,20 @@
 
 ## Topology & domain strategy
 
-- **Landing site** (repo root, static HTML) — Vercel project `neumericagritechsite`, deploys on push to `main`. Target domain: apex (`neumeric.xyz`).
-- **Platform** (`platform/`, Next.js) — its own Vercel project (`neumeric-platform`), root directory `platform`. Target domain: **`app.neumeric.xyz`** (until DNS is set, `neumeric-platform.vercel.app`).
-- Marketing → platform links are plain hyperlinks (sign in, legal pages) and one CORS-allowed API call (waitlist). Sessions live entirely on the platform origin — no cross-origin SSO complexity, and the static site stays static. This split is deliberate: the marketing site can be rebuilt freely without touching the authenticated app, and the app's CSP stays strict.
+- **Landing site** (repo root, static HTML) — Vercel project `neumericagritechsite`, deploys on push to `main`. Domain: `neumeric.xyz` / `www.neumeric.xyz` (live).
+- **Platform** (`platform/`, Next.js) — its own Vercel project (`neumeric-platform`), root directory `platform`. Target domain: **`dashboard.neumeric.xyz`** (attached to the project on Vercel; serves on `neumeric-platform.vercel.app` until the DNS record below is added).
+- **Cross-subdomain auth** — the session/workspace cookies are scoped with `COOKIE_DOMAIN=.neumeric.xyz` (see env table), so a farmer who signs in on the landing site (`neumeric.xyz`) is authenticated on the dashboard (`dashboard.neumeric.xyz`) and back. `sameSite=lax` is safe because both are same-site under the registrable domain. Landing links (`Sign in`, `Take the 2-minute tour`) point at `https://dashboard.neumeric.xyz/...`.
+- **Database** — Turso (hosted libsql). Same schema/migrations as local dev; migrations run automatically at cold start.
+
+### ⚠️ One human DNS step to finish `dashboard.neumeric.xyz` (blocked on Cloudflare access)
+
+`neumeric.xyz` uses **Cloudflare nameservers** (`hugh`/`monika.ns.cloudflare.com`) — DNS is authoritative at Cloudflare, not Vercel, so the Vercel-side DNS zone is inert and the subdomain can only be pointed from the Cloudflare dashboard. The domain is already attached to the `neumeric-platform` Vercel project; the app is healthy on `neumeric-platform.vercel.app`. **To make `dashboard.neumeric.xyz` resolve, add one record in Cloudflare:**
+
+| Type | Name | Target | Proxy |
+|---|---|---|---|
+| CNAME | `dashboard` | `cname.vercel-dns.com` | **DNS only** (grey cloud) |
+
+DNS-only lets Vercel terminate TLS and auto-issue the Let's Encrypt cert (the zone's CAA records already allow `letsencrypt.org`). If you prefer to keep Cloudflare proxying (orange cloud), set the zone SSL mode to **Full (strict)** and expect a few minutes for both certs to settle. Do **not** switch the domain's nameservers to Vercel — that would move the live landing site's DNS too. After the record exists: `curl -I https://dashboard.neumeric.xyz/api/health` should return 200 with `{"ok":true}`.
 - **Database** — Turso (hosted libsql). Same schema/migrations as local dev; migrations run automatically at cold start.
 
 ## Environment variables (platform project on Vercel)

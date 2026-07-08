@@ -505,3 +505,79 @@ em, .italic { font-style: italic; }
   .ndvi-line, .basis-line-a, .basis-line-b { stroke-dashoffset: 0; animation: none; }
   .crash-dot { opacity: 1; animation: none; }
 }
+
+/* ===================== TIERED SENSOR LOOP ===================== */
+.loopwrap { margin-top: 48px; }
+.tiers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.tier {
+  background: var(--paper, #fffdfa);
+  border: 1px solid var(--ash);
+  border-radius: 4px;
+  padding: 24px 22px 20px;
+  position: relative;
+}
+.tier-scale {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--forest-ink);
+  margin-bottom: 10px;
+}
+.tier h3 { font-family: var(--font-display); font-size: 26px; font-weight: 500; margin: 0 0 8px; }
+.tier p { color: var(--ink-soft, #575049); font-size: 14.5px; line-height: 1.5; margin: 0 0 16px; }
+.tier-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--forest-tint);
+  color: var(--forest-ink);
+  border-radius: 60px;
+  padding: 4px 12px;
+}
+.loop-flow { width: 100%; height: 40px; margin: 6px 0 0; display: block; }
+.loop-arrow { animation: loopPulse 2.4s ease-in-out infinite; }
+@keyframes loopPulse { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
+.fcr-node {
+  background: var(--forest);
+  color: var(--cream);
+  border-radius: 4px;
+  padding: 22px 24px;
+  text-align: center;
+  max-width: 620px;
+  margin: 0 auto;
+}
+.fcr-node .mono-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: #cfe6d4;
+  display: block;
+  margin-bottom: 8px;
+}
+.fcr-node p { margin: 0; font-size: 15px; line-height: 1.55; }
+.loop-products {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 28px;
+}
+.lp {
+  border-top: 2px solid var(--forest);
+  padding-top: 12px;
+}
+.lp b { font-family: var(--font-display); font-weight: 500; font-size: 18px; display: block; margin-bottom: 3px; }
+.lp span { color: var(--ink-soft, #575049); font-size: 13.5px; }
+@media (max-width: 760px) {
+  .tiers, .loop-products { grid-template-columns: 1fr; }
+  .loop-flow { transform: rotate(90deg); height: 30px; margin: 2px 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loop-arrow { animation: none; opacity: .7; }
+}
