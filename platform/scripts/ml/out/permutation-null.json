@@ -1,0 +1,25 @@
+{
+ "seed": 20260708,
+ "permutations": 100000,
+ "nStress": 6,
+ "nControl": 31,
+ "rawFireRateDiff": {
+  "observed": 0.0806,
+  "nullMean": 0.0003,
+  "nullSd": 0.2238,
+  "pOneSided": 0.5282
+ },
+ "corroboratedFireRateDiff": {
+  "observed": 0.3333,
+  "nullMean": -0.0,
+  "nullSd": 0.1023,
+  "pOneSided": 0.02262
+ },
+ "fieldZMeanDiff": {
+  "observed": -0.9988,
+  "nullMean": -0.0004,
+  "nullSd": 1.04,
+  "pOneSided": 0.17246
+ },
+ "note": "Engine outputs are label-independent by construction (labels never enter the pipeline); permutation tests whether the observed stress-vs-control contrasts exceed random label assignment."
+}

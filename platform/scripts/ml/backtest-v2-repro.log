@@ -18,3 +18,27 @@
 [18/37] HENRY 2025 [control] quiet z=-1.1181 sev=19% conf=0.48 precip=0.94 [41s]
 [19/37] KENDALL 2019 [control] FIRE z=-8.4094 sev=55% conf=0.95 precip=1.43 [23s]
 [20/37] LA SALLE 2019 [control] FIRE z=-4.2526 sev=58% conf=0.8 precip=1.37 [48s]
+[21/37] LA SALLE 2024 [control] FIRE z=-2.5716 sev=34% conf=0.7 precip=1.02 [50s]
+[22/37] LEE 2019 [control] quiet z=0.3071 sev=38% conf=0.55 precip=1.19 [48s]
+[23/37] LEE 2020 [control] quiet z=-0.0374 sev=27% conf=0.51 precip=0.96 [47s]
+[24/37] LEE 2021 [control] FIRE z=-1.7424 sev=50% conf=0.73 precip=1.16 [56s]
+[25/37] LEE 2023 [stress_strong] quiet z=-0.4408 sev=32% conf=0.57 precip=0.64 [52s]
+[26/37] LEE 2024 [control] FIRE z=-5.9279 sev=55% conf=0.9 precip=1.2 [55s]
+[27/37] MC LEAN 2022 [control] quiet z=1.0717 sev=0% conf=0.57 precip=0.82 [34s]
+[28/37] MC LEAN 2024 [control] quiet z=0.4083 sev=31% conf=0.57 precip=0.64 [38s]
+[29/37] MARSHALL 2020 [control] quiet z=-0.094 sev=42% conf=0.52 precip=0.88 [47s]
+[30/37] MARSHALL 2022 [control] FIRE z=0.7515 sev=28% conf=0.62 precip=0.84 [55s]
+[31/37] SANGAMON 2020 [control] FIRE z=-5.4579 sev=37% conf=0.92 precip=0.69 [51s]
+[32/37] SANGAMON 2024 [control] quiet z=-0.7146 sev=0% conf=0.62 precip=0.85 [55s]
+[33/37] WHITESIDE 2020 [control] quiet z=-0.7087 sev=47% conf=0.48 precip=0.62 [36s]
+[34/37] WHITESIDE 2021 [control] quiet z=-0.7451 sev=32% conf=0.57 precip=1.07 [38s]
+[35/37] WHITESIDE 2022 [control] quiet z=1.8391 sev=40% conf=0.48 precip=0.98 [35s]
+[36/37] WHITESIDE 2023 [stress_moderate] quiet z=-1.4861 sev=0% conf=0.75 precip=0.33 [33s]
+[37/37] WHITESIDE 2024 [control] quiet z=0.4498 sev=66% conf=0.52 precip=1.28 [35s]
+
+=== wrote scripts/ml/backtest-v2-report.repro.json ===
+stress_strong: {"units":4,"assessable":4,"unassessable":0,"unassessableRate":0,"fired":2,"fireRate":0.5,"fireRate95CI":[0.15,0.85],"fieldZ":{"n":4,"mean":-2.315,"median":-0.441,"p25":-2.58,"p75":-0.267},"leverFired":1,"leverFireRate":0.25}
+stress_moderate: {"units":2,"assessable":2,"unassessable":0,"unassessableRate":0,"fired":1,"fireRate":0.5,"fireRate95CI":[0.09,0.91],"fieldZ":{"n":2,"mean":-2.157,"median":-1.486,"p25":-2.827,"p75":-1.486},"leverFired":1,"leverFireRate":0.5}
+control: {"units":31,"assessable":31,"unassessable":0,"unassessableRate":0,"fired":13,"fireRate":0.42,"fireRate95CI":[0.26,0.59],"fieldZ":{"n":31,"mean":-1.264,"median":-0.715,"p25":-2.572,"p75":0.45},"leverFired":0,"leverFireRate":0}
+specificity: 0.58
+z stress: {"n":6,"mean":-2.262,"median":-1.486,"p25":-2.827,"p75":-0.441} z control: {"n":31,"mean":-1.264,"median":-0.715,"p25":-2.572,"p75":0.45}

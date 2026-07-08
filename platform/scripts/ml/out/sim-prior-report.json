@@ -1,0 +1,202 @@
+{
+ "ranAt": "2026-07-08T18:12:35.919Z",
+ "simVersion": "damage-sim@1.0.0",
+ "simParamsHash": "f9605570ab1f17c1d72594aa88c74c7a4219364ce4477ba639c0a31c4ba277ce",
+ "trainN": 8000,
+ "valN": 3000,
+ "pixelAccuracy": 0.853,
+ "binaryDamage": {
+  "precision": 0.983,
+  "recall": 0.961
+ },
+ "confusionMatrix": {
+  "classes": [
+   "healthy",
+   "stressed",
+   "damaged",
+   "destroyed"
+  ],
+  "matrix": [
+   [
+    743,
+    1,
+    0,
+    0
+   ],
+   [
+    50,
+    648,
+    22,
+    3
+   ],
+   [
+    0,
+    32,
+    606,
+    141
+   ],
+   [
+    0,
+    28,
+    163,
+    563
+   ]
+  ]
+ },
+ "segmentation": {
+  "meanIoU": 0.638,
+  "meanAffectedFracError": 0.017,
+  "scenes": [
+   {
+    "seed": 1007,
+    "damage": "damaged",
+    "iou": 0.958,
+    "fracErr": 0.01
+   },
+   {
+    "seed": 1008,
+    "damage": "damaged",
+    "iou": 0.949,
+    "fracErr": 0.016
+   },
+   {
+    "seed": 1009,
+    "damage": "damaged",
+    "iou": 0.943,
+    "fracErr": 0.02
+   },
+   {
+    "seed": 1010,
+    "damage": "damaged",
+    "iou": 0.944,
+    "fracErr": 0.026
+   },
+   {
+    "seed": 1011,
+    "damage": "damaged",
+    "iou": 0.953,
+    "fracErr": 0.023
+   },
+   {
+    "seed": 1012,
+    "damage": "damaged",
+    "iou": 0.949,
+    "fracErr": 0.025
+   },
+   {
+    "seed": 1013,
+    "damage": "damaged",
+    "iou": 0.949,
+    "fracErr": 0.027
+   },
+   {
+    "seed": 1014,
+    "damage": "damaged",
+    "iou": 0.947,
+    "fracErr": 0.032
+   },
+   {
+    "seed": 1009,
+    "damage": "destroyed",
+    "iou": 0.956,
+    "fracErr": 0.011
+   },
+   {
+    "seed": 1010,
+    "damage": "destroyed",
+    "iou": 0.957,
+    "fracErr": 0.015
+   },
+   {
+    "seed": 1011,
+    "damage": "destroyed",
+    "iou": 0.968,
+    "fracErr": 0.013
+   },
+   {
+    "seed": 1012,
+    "damage": "destroyed",
+    "iou": 0.968,
+    "fracErr": 0.013
+   },
+   {
+    "seed": 1013,
+    "damage": "destroyed",
+    "iou": 0.974,
+    "fracErr": 0.012
+   },
+   {
+    "seed": 1014,
+    "damage": "destroyed",
+    "iou": 0.962,
+    "fracErr": 0.02
+   },
+   {
+    "seed": 1015,
+    "damage": "destroyed",
+    "iou": 0.961,
+    "fracErr": 0.019
+   },
+   {
+    "seed": 1016,
+    "damage": "destroyed",
+    "iou": 0.969,
+    "fracErr": 0.014
+   },
+   {
+    "seed": 1008,
+    "damage": "stressed",
+    "iou": 0,
+    "fracErr": 0.009
+   },
+   {
+    "seed": 1009,
+    "damage": "stressed",
+    "iou": 0,
+    "fracErr": 0.01
+   },
+   {
+    "seed": 1010,
+    "damage": "stressed",
+    "iou": 0,
+    "fracErr": 0.014
+   },
+   {
+    "seed": 1011,
+    "damage": "stressed",
+    "iou": 0,
+    "fracErr": 0.015
+   },
+   {
+    "seed": 1012,
+    "damage": "stressed",
+    "iou": 0,
+    "fracErr": 0.015
+   },
+   {
+    "seed": 1013,
+    "damage": "stressed",
+    "iou": 0,
+    "fracErr": 0.014
+   },
+   {
+    "seed": 1014,
+    "damage": "stressed",
+    "iou": 0,
+    "fracErr": 0.016
+   },
+   {
+    "seed": 1015,
+    "damage": "stressed",
+    "iou": 0,
+    "fracErr": 0.014
+   }
+  ]
+ },
+ "honestCaveats": [
+  "Trained and validated on SIMULATION ONLY. Real-field performance is unknown and expected to be worse (sim-to-real gap).",
+  "Classes deliberately overlap (real canopies do), so <100% accuracy is by design and honest.",
+  "Largest sim-to-real gap expected: mixed pixels, atmospheric effects, soil/residue diversity, and crop-stage variation not modeled here.",
+  "This prior is registered production:false and must never drive a real claim/trigger number until calibrated on real captures (docs/CAPTURE-PROTOCOL.md)."
+ ]
+}

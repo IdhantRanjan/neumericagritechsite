@@ -85,9 +85,11 @@ function fail(reason: string): DroneAssessment {
   };
 }
 
-/** EPSG from GeoTIFF geo keys; null when the raster isn't georeferenced. */
-function epsgOf(img: { geoKeys?: Record<string, number> }): number | null {
-  const k = img.geoKeys ?? {};
+/** EPSG from GeoTIFF geo keys; null when the raster isn't georeferenced.
+ * geotiff.js exposes keys via the getGeoKeys() METHOD (audit-caught bug:
+ * reading a `.geoKeys` property returned undefined for every real file). */
+function epsgOf(img: { getGeoKeys?: () => Record<string, number> | null; geoKeys?: Record<string, number> }): number | null {
+  const k = (typeof img.getGeoKeys === "function" ? img.getGeoKeys() : img.geoKeys) ?? {};
   return k.ProjectedCSTypeGeoKey ?? k.GeographicTypeGeoKey ?? null;
 }
 

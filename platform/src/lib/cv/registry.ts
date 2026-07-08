@@ -16,12 +16,13 @@ import type { DB } from "@/db";
 import type { Field } from "@/db/schema";
 import { detectDamage, type DamageAssessment } from "@/lib/satellite/damage";
 import { demoAnalyzer } from "./demo-analyzer";
+import { simPriorMeta } from "./sim-prior";
 import { METHODOLOGY_VERSION } from "@/lib/satellite/methodology";
 
 export interface DamageModelMeta {
   name: string;
   version: string;
-  kind: "index-change-detection" | "learned-regressor" | "demo-stub";
+  kind: "index-change-detection" | "learned-regressor" | "demo-stub" | "learned-sim-prior";
   production: boolean; // may this model's output back a real claim?
   description: string;
 }
@@ -98,11 +99,17 @@ export function primaryModelFor(isDemoOperation: boolean): DamageModel {
 }
 
 export function listModels(): DamageModelMeta[] {
-  return [...REGISTRY.values()].map(({ name, version, kind, production, description }) => ({
+  const base = [...REGISTRY.values()].map(({ name, version, kind, production, description }) => ({
     name,
     version,
     kind,
     production,
     description,
   }));
+  // The sim-to-real prior (B2) is discoverable here but is imagery/pixel-level
+  // (not the field-level assess() interface) and permanently production:false
+  // until real-capture calibration. Listed so the registry is the single
+  // source of truth about what exists and what may touch a real number.
+  base.push(simPriorMeta());
+  return base;
 }
