@@ -358,6 +358,65 @@ not yet wired. Until then the chain defends against DB tampering and
 after-the-fact edits, and the packet says exactly that rather than claiming
 more.
 
+## 7. Field-capture data system (B1 — `capture_sessions`, docs/CAPTURE-PROTOCOL.md)
+
+The machine that mints real ground truth. A **capture session** pairs a
+georeferenced drone orthomosaic with a structured human ground-truth record —
+damage type, per-zone estimated % loss, conditions, protocol checklist — all
+linked to the field/event/claim and committed to the provenance chain. The
+flight/GSD/overlap/timing requirements live in
+[CAPTURE-PROTOCOL.md](CAPTURE-PROTOCOL.md); the in-app flow is built for a
+founder standing in a field with a tablet. Sessions flow into the tier-aware
+training export (§2) as **calibration-grade** examples, and the session keeps
+open slots for the adjuster settlement and final harvested yield so the label
+loop closes when those numbers arrive months later. **Gate:** nothing here is
+a model — it is the data instrument every model below waits on.
+
+## 8. Damage simulator + sim-to-real prior (B2 — `lib/sim/`, `cv/sim-prior.ts`)
+
+**Simulator** (`damage-sim@1.0.0`, params-hashed): procedurally generates
+damaged-field spectra with known truth masks, grounded in real vegetation-index
+behavior — hail defoliation (NDVI/ExG drop consistent with canopy loss +
+exposed-soil mixing along storm-vector streaks), flood inundation (water
+spectra in low zones), drought senescence gradients, disease patchiness.
+Assumptions and the likely sim-to-real gaps (canopy regrowth dynamics,
+atmosphere, sensor noise, real soil variability) are documented in the module.
+
+**Prior** (`sim-prior@0.1.0`): multinomial logistic classifier over index
+features, trained ONLY on simulated pixels; held-out **simulated** validation:
+85.3% 4-class pixel accuracy, binary damage precision 0.98 / recall 0.96
+(`scripts/ml/out/sim-prior-report.json`). Those are sim-space numbers and are
+never presented as real-field accuracy. Registered `production: false` in the
+model registry; the fusion engine (§9) and the registry both bar it from real
+claim/trigger/displayed numbers. `finetuneHook()` defines exactly how Track B
+captures retrain and calibrate it (leave-one-event-out + conformal calibration
+before any production flag flips). **Gate: (a) real labeled captures.**
+
+## 9. Sensor fusion + honest uncertainty (B3 — `lib/fusion.ts`, `fusion@1.0.0`)
+
+One deterministic decision per claim event from all three tiers, with the
+audit's bias built in: **prefer abstention over false confidence.** States:
+
+- `abstain` — the default when evidence cannot honestly answer (tiers
+  disagree, coverage poor, sub-pixel damage with no drone capture). The UI
+  shows the abstention and its reasons, not a number.
+- `screening_only` — satellite fired but uncorroborated: explicitly *not
+  claim-grade on its own* (that is what §3c measured).
+- `screening_corroborated` — satellite fire + the pre-registered weather
+  lever (<60% of 10-yr normal rainfall): the configuration that measured
+  specificity 1.00 (0/31) at ~33% sensitivity, n=6 caveat attached.
+- `field_measured_uncalibrated` — a drone capture measured the damage:
+  magnitude is real and auditable, confidence stays uncalibrated until §7
+  labels exist.
+
+No calibrated probability is emitted anywhere, because the measured
+confidence was anti-calibrated (§3c). `calibrationState()` reports progress
+toward the 150-label threshold at which a conformal calibrator (trained on
+real capture outcomes) may replace the fixed rules — the auto-calibration
+hook is wired, empty, and waiting. Fused verdicts are stored on the FCR with
+per-tier provenance and the fusion params hash. **Gate: (a) labeled data for
+calibration; the abstention behavior itself ships now.**
+
 ---
 
 ## Operational notes
