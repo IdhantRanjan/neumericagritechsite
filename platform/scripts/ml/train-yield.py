@@ -26,8 +26,17 @@ import numpy as np
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.linear_model import Ridge
 
-FEATURES = ["ndviIntegral", "ndviPeak", "ndviMid", "ndviLate", "peakDoy", "coverage"]
+FEATURES = ["ndviIntegral", "ndviPeak", "ndviMid", "ndviLate", "peakDoy", "coverage",
+            "precip_jja_mm", "tmax_mean_jja", "days_gt32_jja"]
 # ndviEarly is dropped: sparse (spring clouds) and imputation adds noise.
+# Weather covariates (Open-Meteo ERA5 archive, add-weather.py) target the
+# year effect that NDVI alone misses; chosen for agronomic mechanism.
+
+def load_weather(path):
+    try:
+        return json.load(open(path))
+    except FileNotFoundError:
+        return {}
 
 def load_features(path):
     per_unit = defaultdict(list)
@@ -37,12 +46,16 @@ def load_features(path):
                 continue
             r = json.loads(line)
             per_unit[(r["fips"], r["year"])].append(r)
+    weather = load_weather(path.replace("features.jsonl", "weather.json"))
     units = []
     for (fips, year), rows in per_unit.items():
         feat = {}
         for k in FEATURES:
             vals = [r[k] for r in rows if r.get(k) is not None]
             feat[k] = float(np.mean(vals)) if vals else None
+        w = weather.get(f"{fips}-{year}", {})
+        for k in ("precip_jja_mm", "tmax_mean_jja", "days_gt32_jja"):
+            feat[k] = w.get(k)
         if feat["ndviIntegral"] is None or feat["ndviPeak"] is None:
             continue
         units.append({"fips": fips, "county": rows[0]["county"], "year": year,

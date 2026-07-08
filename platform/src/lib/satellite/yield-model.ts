@@ -15,6 +15,7 @@
  */
 import model from "@/data/models/yield-model.json";
 import type { sceneObservations } from "@/db/schema";
+import { fetchWithRetry } from "@/lib/net";
 
 type Observation = typeof sceneObservations.$inferSelect;
 
@@ -108,11 +109,47 @@ export function seasonFeatures(
   };
 }
 
-export function modelYieldEstimate(
+/**
+ * Season weather covariates — the SAME aggregates the model was trained on
+ * (complete June–August, Open-Meteo ERA5 archive). In-season the JJA window
+ * is incomplete and a partial sum would be a systematically-biased feature,
+ * so the model estimate is only available once the season's weather record
+ * is complete (after Sept 1). Before that, the self-relative estimator is
+ * the in-season indicator.
+ */
+async function seasonWeather(
+  lat: number,
+  lng: number,
+  year: number
+): Promise<{ precip_jja_mm: number; tmax_mean_jja: number; days_gt32_jja: number } | null> {
+  try {
+    const url =
+      `https://archive-api.open-meteo.com/v1/archive?latitude=${lat.toFixed(4)}&longitude=${lng.toFixed(4)}` +
+      `&start_date=${year}-06-01&end_date=${year}-08-31&daily=precipitation_sum,temperature_2m_max&timezone=UTC`;
+    const res = await fetchWithRetry(url);
+    if (!res.ok) return null;
+    const j = (await res.json()) as {
+      daily?: { precipitation_sum?: Array<number | null>; temperature_2m_max?: Array<number | null> };
+    };
+    const precip = j.daily?.precipitation_sum?.filter((v): v is number => v != null) ?? [];
+    const tmax = j.daily?.temperature_2m_max?.filter((v): v is number => v != null) ?? [];
+    if (precip.length < 80 || tmax.length < 80) return null; // incomplete record
+    return {
+      precip_jja_mm: Math.round(precip.reduce((a, b) => a + b, 0) * 10) / 10,
+      tmax_mean_jja: Math.round((tmax.reduce((a, b) => a + b, 0) / tmax.length) * 100) / 100,
+      days_gt32_jja: tmax.filter((v) => v > 32).length,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function modelYieldEstimate(
   observations: Observation[],
   crop: string,
-  seasonYear: number
-): ModelYieldEstimate {
+  seasonYear: number,
+  centroid: { lat: number; lng: number }
+): Promise<ModelYieldEstimate> {
   const base: ModelYieldEstimate = {
     ok: false,
     modelVersion: M.version,
@@ -131,7 +168,18 @@ export function modelYieldEstimate(
   const f = seasonFeatures(observations, seasonYear);
   if ("insufficient" in f) return { ...base, reason: `Not enough season coverage: ${f.insufficient}.` };
 
-  const x = M.features.map((k) => f[k]);
+  const jjaComplete = new Date() >= new Date(`${seasonYear}-09-08`);
+  if (!jjaComplete) {
+    return {
+      ...base,
+      reason: `The trained model uses the season's complete June–August weather record — available after early September ${seasonYear}. Until then the self-relative estimate above is the in-season indicator.`,
+    };
+  }
+  const weather = await seasonWeather(centroid.lat, centroid.lng, seasonYear);
+  if (!weather) return { ...base, reason: "Season weather record unavailable right now — try again later." };
+
+  const all: Record<string, number> = { ...f, ...weather };
+  const x = M.features.map((k) => all[k]);
   const est = predict(x);
   const band = M.metrics.rmse_bu_ac * FIELD_SCALE_FACTOR;
   const r1 = (v: number) => Math.round(v * 10) / 10;
@@ -141,6 +189,6 @@ export function modelYieldEstimate(
     estimateBuAc: r1(est),
     loBuAc: r1(est - band),
     hiBuAc: r1(est + band),
-    features: Object.fromEntries(Object.entries(f).map(([k, v]) => [k, Math.round(v * 1000) / 1000])),
+    features: Object.fromEntries(Object.entries(all).map(([k, v]) => [k, Math.round(v * 1000) / 1000])),
   };
 }

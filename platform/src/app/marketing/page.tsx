@@ -9,6 +9,7 @@ import {
 import { derivePosition, targetHit, type Position } from "@/lib/marketing";
 import { runMonteCarlo } from "@/lib/marketing-mc";
 import { estimateYield, type YieldEstimate } from "@/lib/satellite/yield";
+import { modelYieldEstimate, type ModelYieldEstimate } from "@/lib/satellite/yield-model";
 import { saveMarketingPosition, addPlanTarget, setTargetStatus } from "@/app/actions";
 import { Meta, PageHeader, Tag } from "@/components/ui";
 
@@ -59,6 +60,7 @@ export default async function MarketingPage() {
 async function satelliteYield(operationId: string, position: Position) {
   const fields = await getFields(operationId);
   const perField: Array<{ name: string; acres: number; est: YieldEstimate }> = [];
+  let modelEst: ModelYieldEstimate | null = null;
   for (const f of fields) {
     if (!f.boundary) continue;
     const seasons = await getSeasonsByField(f.id);
@@ -67,13 +69,24 @@ async function satelliteYield(operationId: string, position: Position) {
     if (obs.length === 0) continue;
     const est = estimateYield(obs, position.crop, position.year, position.expectedYieldBuPerAcre ?? 0);
     perField.push({ name: f.name, acres: f.acres, est });
+    // trained-model estimate from the first field with enough coverage
+    if (!modelEst?.ok) {
+      const ring = f.boundary.coordinates[0];
+      const centroid = {
+        lat: ring.reduce((a, p) => a + p[1], 0) / ring.length,
+        lng: ring.reduce((a, p) => a + p[0], 0) / ring.length,
+      };
+      modelEst = await modelYieldEstimate(obs, position.crop, position.year, centroid);
+    }
   }
   const usable = perField.filter((p) => p.est.ok && p.est.estimateBuAc != null);
-  if (usable.length === 0) return { perField, combined: null as null | { est: number; lo: number; hi: number; acres: number } };
+  if (usable.length === 0)
+    return { perField, modelEst, combined: null as null | { est: number; lo: number; hi: number; acres: number } };
   const acres = usable.reduce((a, p) => a + p.acres, 0);
   const w = (sel: (e: YieldEstimate) => number) => usable.reduce((a, p) => a + sel(p.est) * p.acres, 0) / acres;
   return {
     perField,
+    modelEst,
     combined: {
       est: Math.round(w((e) => e.estimateBuAc!) * 10) / 10,
       lo: Math.round(w((e) => e.loBuAc!) * 10) / 10,
@@ -229,6 +242,31 @@ async function PositionDashboard({
                 "Open a field and run satellite scans (this season + at least 2 prior seasons)."}
             </p>
           )}
+          <div className="border-t border-ash mt-4 pt-4">
+            <p className="label mb-1">Trained-model estimate · nass-s2-corn-il@1.0.0</p>
+            {satYield.modelEst?.ok ? (
+              <>
+                <p className="text-[1.2rem] font-serif">
+                  {satYield.modelEst.estimateBuAc} bu/ac
+                  <span className="text-ink-soft text-[0.95rem]">
+                    {" "}({satYield.modelEst.loBuAc}–{satYield.modelEst.hiBuAc})
+                  </span>
+                </p>
+                <p className="text-[13px] text-ink-soft mt-1 max-w-[680px]">
+                  Ridge regression on Sentinel-2 NDVI season features + season weather, trained
+                  on {satYield.modelEst.nTrainingSamples} real USDA NASS county-yield records
+                  (IL corn, 2019–2023). Cross-validated county-level error: RMSE{" "}
+                  {satYield.modelEst.rmseCountyBuAc} bu/ac (held-out years/counties, worst
+                  axis); the band shown is widened 1.5× because a single field varies more than
+                  a county mean.
+                </p>
+              </>
+            ) : (
+              <p className="text-[13px] text-ink-soft max-w-[680px]">
+                {satYield.modelEst?.reason ?? "Scan a field with a boundary to enable the model estimate."}
+              </p>
+            )}
+          </div>
         </section>
       )}
 

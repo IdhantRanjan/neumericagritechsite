@@ -1,0 +1,69 @@
+{
+  "trained_at": "2026-07-08T06:52:51.780652+00:00",
+  "n_samples": 78,
+  "n_counties": 20,
+  "years": [
+    2019,
+    2020,
+    2021,
+    2022,
+    2023
+  ],
+  "features": [
+    "ndviIntegral",
+    "ndviPeak",
+    "ndviMid",
+    "ndviLate",
+    "peakDoy",
+    "coverage",
+    "precip_jja_mm",
+    "tmax_mean_jja",
+    "days_gt32_jja"
+  ],
+  "label_source": "USDA NASS QuickStats bulk (SURVEY), CORN GRAIN BU/ACRE, county level, Illinois",
+  "feature_source": "Sentinel-2 L2A via Earth Search; CDL-verified corn patches (CropScape), 2/county-year",
+  "cv": {
+    "ridge": {
+      "leave_one_year_out": {
+        "rmse_bu_ac": 13.63,
+        "mae_bu_ac": 11.48,
+        "r2": 0.205,
+        "n": 78,
+        "label_mean_bu_ac": 205.8,
+        "label_std_bu_ac": 15.3
+      },
+      "leave_one_county_out": {
+        "rmse_bu_ac": 11.18,
+        "mae_bu_ac": 9.13,
+        "r2": 0.465,
+        "n": 78,
+        "label_mean_bu_ac": 205.8,
+        "label_std_bu_ac": 15.3
+      }
+    },
+    "gbr": {
+      "leave_one_year_out": {
+        "rmse_bu_ac": 15.72,
+        "mae_bu_ac": 13.22,
+        "r2": -0.058,
+        "n": 78,
+        "label_mean_bu_ac": 205.8,
+        "label_std_bu_ac": 15.3
+      },
+      "leave_one_county_out": {
+        "rmse_bu_ac": 12.22,
+        "mae_bu_ac": 9.77,
+        "r2": 0.361,
+        "n": 78,
+        "label_mean_bu_ac": 205.8,
+        "label_std_bu_ac": 15.3
+      }
+    }
+  },
+  "deployed": "ridge",
+  "deployed_error": {
+    "rmse_bu_ac": 13.63,
+    "mae_bu_ac": 11.48,
+    "note": "worst of year-out/county-out CV; county-level error \u2014 single-field error is larger"
+  }
+}

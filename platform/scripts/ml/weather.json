@@ -1,0 +1,402 @@
+{
+ "007-2019": {
+  "precip_jja_mm": 280.1,
+  "tmax_mean_jja": 26.55,
+  "days_gt32_jja": 2
+ },
+ "007-2020": {
+  "precip_jja_mm": 203.0,
+  "tmax_mean_jja": 28.1,
+  "days_gt32_jja": 8
+ },
+ "007-2021": {
+  "precip_jja_mm": 354.1,
+  "tmax_mean_jja": 28.94,
+  "days_gt32_jja": 15
+ },
+ "007-2023": {
+  "precip_jja_mm": 185.5,
+  "tmax_mean_jja": 28.34,
+  "days_gt32_jja": 9
+ },
+ "011-2019": {
+  "precip_jja_mm": 300.1,
+  "tmax_mean_jja": 27.7,
+  "days_gt32_jja": 5
+ },
+ "011-2020": {
+  "precip_jja_mm": 217.5,
+  "tmax_mean_jja": 28.95,
+  "days_gt32_jja": 11
+ },
+ "011-2021": {
+  "precip_jja_mm": 409.4,
+  "tmax_mean_jja": 28.65,
+  "days_gt32_jja": 10
+ },
+ "011-2023": {
+  "precip_jja_mm": 229.4,
+  "tmax_mean_jja": 28.77,
+  "days_gt32_jja": 15
+ },
+ "019-2019": {
+  "precip_jja_mm": 209.3,
+  "tmax_mean_jja": 28.09,
+  "days_gt32_jja": 5
+ },
+ "019-2020": {
+  "precip_jja_mm": 215.1,
+  "tmax_mean_jja": 29.16,
+  "days_gt32_jja": 11
+ },
+ "019-2021": {
+  "precip_jja_mm": 286.4,
+  "tmax_mean_jja": 28.46,
+  "days_gt32_jja": 8
+ },
+ "019-2022": {
+  "precip_jja_mm": 235.6,
+  "tmax_mean_jja": 29.33,
+  "days_gt32_jja": 17
+ },
+ "019-2023": {
+  "precip_jja_mm": 260.4,
+  "tmax_mean_jja": 28.7,
+  "days_gt32_jja": 14
+ },
+ "037-2019": {
+  "precip_jja_mm": 297.2,
+  "tmax_mean_jja": 26.85,
+  "days_gt32_jja": 3
+ },
+ "037-2020": {
+  "precip_jja_mm": 223.4,
+  "tmax_mean_jja": 27.99,
+  "days_gt32_jja": 5
+ },
+ "037-2021": {
+  "precip_jja_mm": 391.5,
+  "tmax_mean_jja": 28.47,
+  "days_gt32_jja": 9
+ },
+ "037-2022": {
+  "precip_jja_mm": 358.6,
+  "tmax_mean_jja": 28.18,
+  "days_gt32_jja": 10
+ },
+ "037-2023": {
+  "precip_jja_mm": 207.8,
+  "tmax_mean_jja": 28.2,
+  "days_gt32_jja": 8
+ },
+ "053-2019": {
+  "precip_jja_mm": 167.3,
+  "tmax_mean_jja": 27.75,
+  "days_gt32_jja": 4
+ },
+ "053-2020": {
+  "precip_jja_mm": 182.4,
+  "tmax_mean_jja": 29.11,
+  "days_gt32_jja": 6
+ },
+ "053-2021": {
+  "precip_jja_mm": 327.6,
+  "tmax_mean_jja": 28.03,
+  "days_gt32_jja": 3
+ },
+ "053-2022": {
+  "precip_jja_mm": 244.6,
+  "tmax_mean_jja": 28.95,
+  "days_gt32_jja": 10
+ },
+ "053-2023": {
+  "precip_jja_mm": 292.5,
+  "tmax_mean_jja": 28.58,
+  "days_gt32_jja": 14
+ },
+ "073-2019": {
+  "precip_jja_mm": 260.8,
+  "tmax_mean_jja": 27.81,
+  "days_gt32_jja": 7
+ },
+ "073-2020": {
+  "precip_jja_mm": 186.6,
+  "tmax_mean_jja": 28.9,
+  "days_gt32_jja": 10
+ },
+ "073-2021": {
+  "precip_jja_mm": 352.9,
+  "tmax_mean_jja": 28.51,
+  "days_gt32_jja": 9
+ },
+ "073-2022": {
+  "precip_jja_mm": 280.1,
+  "tmax_mean_jja": 28.85,
+  "days_gt32_jja": 14
+ },
+ "073-2023": {
+  "precip_jja_mm": 269.8,
+  "tmax_mean_jja": 29.0,
+  "days_gt32_jja": 15
+ },
+ "089-2021": {
+  "precip_jja_mm": 420.5,
+  "tmax_mean_jja": 28.23,
+  "days_gt32_jja": 7
+ },
+ "089-2023": {
+  "precip_jja_mm": 276.5,
+  "tmax_mean_jja": 27.87,
+  "days_gt32_jja": 6
+ },
+ "093-2020": {
+  "precip_jja_mm": 229.0,
+  "tmax_mean_jja": 28.63,
+  "days_gt32_jja": 11
+ },
+ "093-2021": {
+  "precip_jja_mm": 472.9,
+  "tmax_mean_jja": 28.58,
+  "days_gt32_jja": 8
+ },
+ "093-2022": {
+  "precip_jja_mm": 391.2,
+  "tmax_mean_jja": 28.18,
+  "days_gt32_jja": 11
+ },
+ "093-2023": {
+  "precip_jja_mm": 299.3,
+  "tmax_mean_jja": 28.7,
+  "days_gt32_jja": 12
+ },
+ "095-2019": {
+  "precip_jja_mm": 225.8,
+  "tmax_mean_jja": 28.1,
+  "days_gt32_jja": 8
+ },
+ "095-2020": {
+  "precip_jja_mm": 169.1,
+  "tmax_mean_jja": 29.41,
+  "days_gt32_jja": 13
+ },
+ "095-2021": {
+  "precip_jja_mm": 323.7,
+  "tmax_mean_jja": 28.42,
+  "days_gt32_jja": 7
+ },
+ "095-2022": {
+  "precip_jja_mm": 238.7,
+  "tmax_mean_jja": 28.89,
+  "days_gt32_jja": 15
+ },
+ "095-2023": {
+  "precip_jja_mm": 231.7,
+  "tmax_mean_jja": 29.2,
+  "days_gt32_jja": 16
+ },
+ "099-2019": {
+  "precip_jja_mm": 259.2,
+  "tmax_mean_jja": 27.5,
+  "days_gt32_jja": 4
+ },
+ "099-2020": {
+  "precip_jja_mm": 227.8,
+  "tmax_mean_jja": 28.98,
+  "days_gt32_jja": 11
+ },
+ "099-2022": {
+  "precip_jja_mm": 319.1,
+  "tmax_mean_jja": 28.8,
+  "days_gt32_jja": 14
+ },
+ "099-2023": {
+  "precip_jja_mm": 250.9,
+  "tmax_mean_jja": 29.05,
+  "days_gt32_jja": 14
+ },
+ "103-2019": {
+  "precip_jja_mm": 347.7,
+  "tmax_mean_jja": 27.18,
+  "days_gt32_jja": 3
+ },
+ "103-2020": {
+  "precip_jja_mm": 171.6,
+  "tmax_mean_jja": 28.52,
+  "days_gt32_jja": 8
+ },
+ "103-2021": {
+  "precip_jja_mm": 338.9,
+  "tmax_mean_jja": 28.67,
+  "days_gt32_jja": 10
+ },
+ "103-2022": {
+  "precip_jja_mm": 330.8,
+  "tmax_mean_jja": 28.41,
+  "days_gt32_jja": 11
+ },
+ "103-2023": {
+  "precip_jja_mm": 226.4,
+  "tmax_mean_jja": 28.44,
+  "days_gt32_jja": 11
+ },
+ "105-2019": {
+  "precip_jja_mm": 167.5,
+  "tmax_mean_jja": 27.92,
+  "days_gt32_jja": 6
+ },
+ "105-2021": {
+  "precip_jja_mm": 455.5,
+  "tmax_mean_jja": 28.26,
+  "days_gt32_jja": 6
+ },
+ "105-2023": {
+  "precip_jja_mm": 349.6,
+  "tmax_mean_jja": 28.76,
+  "days_gt32_jja": 14
+ },
+ "113-2019": {
+  "precip_jja_mm": 144.6,
+  "tmax_mean_jja": 27.83,
+  "days_gt32_jja": 4
+ },
+ "113-2020": {
+  "precip_jja_mm": 191.6,
+  "tmax_mean_jja": 28.87,
+  "days_gt32_jja": 8
+ },
+ "113-2021": {
+  "precip_jja_mm": 423.5,
+  "tmax_mean_jja": 27.88,
+  "days_gt32_jja": 3
+ },
+ "113-2023": {
+  "precip_jja_mm": 302.0,
+  "tmax_mean_jja": 28.65,
+  "days_gt32_jja": 14
+ },
+ "115-2021": {
+  "precip_jja_mm": 387.4,
+  "tmax_mean_jja": 28.68,
+  "days_gt32_jja": 10
+ },
+ "115-2023": {
+  "precip_jja_mm": 290.9,
+  "tmax_mean_jja": 28.78,
+  "days_gt32_jja": 13
+ },
+ "123-2021": {
+  "precip_jja_mm": 378.7,
+  "tmax_mean_jja": 28.67,
+  "days_gt32_jja": 6
+ },
+ "123-2022": {
+  "precip_jja_mm": 318.0,
+  "tmax_mean_jja": 28.63,
+  "days_gt32_jja": 12
+ },
+ "123-2023": {
+  "precip_jja_mm": 305.0,
+  "tmax_mean_jja": 29.27,
+  "days_gt32_jja": 16
+ },
+ "137-2019": {
+  "precip_jja_mm": 257.1,
+  "tmax_mean_jja": 28.47,
+  "days_gt32_jja": 5
+ },
+ "137-2020": {
+  "precip_jja_mm": 267.7,
+  "tmax_mean_jja": 29.24,
+  "days_gt32_jja": 12
+ },
+ "137-2021": {
+  "precip_jja_mm": 416.0,
+  "tmax_mean_jja": 28.85,
+  "days_gt32_jja": 11
+ },
+ "137-2022": {
+  "precip_jja_mm": 259.6,
+  "tmax_mean_jja": 29.03,
+  "days_gt32_jja": 11
+ },
+ "137-2023": {
+  "precip_jja_mm": 263.9,
+  "tmax_mean_jja": 29.15,
+  "days_gt32_jja": 12
+ },
+ "147-2020": {
+  "precip_jja_mm": 216.6,
+  "tmax_mean_jja": 29.14,
+  "days_gt32_jja": 10
+ },
+ "147-2021": {
+  "precip_jja_mm": 351.8,
+  "tmax_mean_jja": 28.64,
+  "days_gt32_jja": 8
+ },
+ "147-2023": {
+  "precip_jja_mm": 249.7,
+  "tmax_mean_jja": 28.74,
+  "days_gt32_jja": 15
+ },
+ "167-2020": {
+  "precip_jja_mm": 233.1,
+  "tmax_mean_jja": 29.28,
+  "days_gt32_jja": 11
+ },
+ "167-2021": {
+  "precip_jja_mm": 472.7,
+  "tmax_mean_jja": 28.84,
+  "days_gt32_jja": 9
+ },
+ "167-2023": {
+  "precip_jja_mm": 272.8,
+  "tmax_mean_jja": 29.08,
+  "days_gt32_jja": 13
+ },
+ "195-2019": {
+  "precip_jja_mm": 264.8,
+  "tmax_mean_jja": 27.67,
+  "days_gt32_jja": 5
+ },
+ "195-2020": {
+  "precip_jja_mm": 177.9,
+  "tmax_mean_jja": 28.91,
+  "days_gt32_jja": 16
+ },
+ "195-2021": {
+  "precip_jja_mm": 283.2,
+  "tmax_mean_jja": 29.11,
+  "days_gt32_jja": 18
+ },
+ "195-2022": {
+  "precip_jja_mm": 325.0,
+  "tmax_mean_jja": 28.37,
+  "days_gt32_jja": 10
+ },
+ "195-2023": {
+  "precip_jja_mm": 175.5,
+  "tmax_mean_jja": 29.13,
+  "days_gt32_jja": 15
+ },
+ "203-2019": {
+  "precip_jja_mm": 139.4,
+  "tmax_mean_jja": 27.89,
+  "days_gt32_jja": 4
+ },
+ "203-2020": {
+  "precip_jja_mm": 207.9,
+  "tmax_mean_jja": 28.96,
+  "days_gt32_jja": 11
+ },
+ "203-2021": {
+  "precip_jja_mm": 398.1,
+  "tmax_mean_jja": 28.07,
+  "days_gt32_jja": 4
+ },
+ "203-2022": {
+  "precip_jja_mm": 251.1,
+  "tmax_mean_jja": 28.58,
+  "days_gt32_jja": 10
+ }
+}
