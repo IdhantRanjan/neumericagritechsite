@@ -141,6 +141,15 @@ export async function getLabelsForClaim(claimId: string) {
   return db.select().from(t.groundTruthLabels).where(eq(t.groundTruthLabels.claimId, claimId));
 }
 
+export async function getRoutingForClaim(claimId: string) {
+  const db = await getDb();
+  const rows = await db
+    .select()
+    .from(t.routingDecisions)
+    .where(eq(t.routingDecisions.claimId, claimId));
+  return rows.sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))[0];
+}
+
 export async function getLatestAuditFor(entityType: string, entityId: string, action: string) {
   const db = await getDb();
   const rows = await db.select().from(t.auditEvents).where(eq(t.auditEvents.entityType, entityType));

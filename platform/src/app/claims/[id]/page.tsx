@@ -10,8 +10,9 @@ import {
   getPolicyRef,
   getLabelsForClaim,
   getLatestAuditFor,
+  getRoutingForClaim,
 } from "@/lib/data";
-import { addEvidence, markFcrReviewed, analyzeClaimSatellite, recordOutcome } from "@/app/actions";
+import { addEvidence, markFcrReviewed, analyzeClaimSatellite, recordOutcome, ingestDroneOrtho } from "@/app/actions";
 import { FieldShape, Meta, PageHeader, Tag } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +41,7 @@ export default async function ClaimDetail({ params }: { params: Promise<{ id: st
   const labels = await getLabelsForClaim(claim.id);
   const unavailable = await getLatestAuditFor("claim", claim.id, "satellite_analysis_unavailable");
   const unavailableReason = (unavailable?.detail as { reason?: string } | undefined)?.reason;
+  const routing = await getRoutingForClaim(claim.id);
 
   return (
     <>
@@ -71,9 +73,26 @@ export default async function ClaimDetail({ params }: { params: Promise<{ id: st
       </div>
 
       {claim.narrative && (
-        <div className="card p-5 mb-10 max-w-[820px]">
+        <div className="card p-5 mb-6 max-w-[820px]">
           <p className="label mb-2">Your account</p>
           <p className="text-[15px] italic">&ldquo;{claim.narrative}&rdquo;</p>
+        </div>
+      )}
+
+      {routing && (
+        <div className="card p-5 mb-10 max-w-[820px] border-l-4 border-l-forest">
+          <p className="label mb-2">
+            Sensor plan · {routing.primarySensor} primary
+            {routing.corroborating.length ? ` + ${routing.corroborating.join(" & ")}` : ""}
+          </p>
+          <ul className="text-[13.5px] text-ink-soft space-y-1 list-disc pl-5">
+            {routing.rationale.map((r, i) => (
+              <li key={i}>{r}</li>
+            ))}
+          </ul>
+          <p className="label mt-3 !text-[10.5px]">
+            Deterministic routing rule {routing.ruleVersion} · {routing.ruleHash.slice(0, 12)}… — logged for audit
+          </p>
         </div>
       )}
 
@@ -113,6 +132,32 @@ export default async function ClaimDetail({ params }: { params: Promise<{ id: st
               <button type="submit" className="pill pill--solid pill--sm">
                 Analyze with satellite
               </button>
+            </form>
+          )}
+
+          {!op.isDemo && writable && (
+            <form
+              action={ingestDroneOrtho.bind(null, claim.id)}
+              className={`card p-5 no-print mb-5 ${routing?.primarySensor === "drone" ? "border-l-4 border-l-forest" : ""}`}
+            >
+              <p className="label mb-1">
+                Drone orthomosaic
+                {routing?.primarySensor === "drone" ? " — recommended for this damage type" : " — high-resolution tier"}
+              </p>
+              <p className="text-[13.5px] text-ink-soft mb-3 max-w-[400px]">
+                Upload the georeferenced GeoTIFF your drone-mapping app exports (DroneDeploy,
+                Pix4D, WebODM). Resolves damage finer than 10 m satellite pixels — the tier for
+                hail strips and flood pockets. Stored content-addressed; analysis is deterministic
+                but <strong>uncalibrated</strong> until real labeled captures validate it, so its
+                confidence is reported as 0, not invented.
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <input type="file" name="ortho" accept=".tif,.tiff,image/tiff" required className="text-[13px]" />
+                <label className="flex items-center gap-2 text-[13px]">
+                  <input type="checkbox" name="hasNir" /> has NIR band (NDVI)
+                </label>
+                <button type="submit" className="pill pill--sm">Ingest orthomosaic</button>
+              </div>
             </form>
           )}
 

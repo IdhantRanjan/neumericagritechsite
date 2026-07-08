@@ -21,6 +21,8 @@ import { ringAcres, ringToUtm, epsgForLngLat, approxRectBoundary } from "@/lib/s
 import { appendProvenance } from "@/lib/provenance";
 import { putObject } from "@/lib/storage";
 import { createJob, runJob } from "@/lib/jobs";
+import { routeSensors } from "@/lib/sensors/routing";
+import { analyzeOrtho, DRONE_METHODOLOGY_VERSION } from "@/lib/drone/analyze";
 import {
   defaultDroughtStressMethodology,
   evaluateTrigger,
@@ -259,6 +261,28 @@ export async function createClaim(formData: FormData) {
     createdAt: now(),
   });
   await audit(op.id, "claim_created", "claim", claimId, { fieldId, damageType, eventDate });
+
+  // Deterministic sensor routing for this claim event — logged and auditable.
+  const decision = routeSensors("claim_event", damageType);
+  await db.insert(t.routingDecisions).values({
+    id: id("route"),
+    operationId: op.id,
+    fieldId,
+    claimId,
+    question: decision.question,
+    damageType: decision.damageType,
+    primarySensor: decision.primary,
+    corroborating: decision.corroborating,
+    rationale: decision.rationale,
+    ruleVersion: decision.ruleVersion,
+    ruleHash: decision.ruleHash,
+    createdAt: now(),
+  });
+  await audit(op.id, "sensor_routed", "claim", claimId, {
+    primary: decision.primary,
+    corroborating: decision.corroborating,
+    ruleVersion: decision.ruleVersion,
+  });
   redirect(`/claims/${claimId}`);
 }
 
@@ -792,6 +816,105 @@ export async function analyzeClaimSatellite(claimId: string) {
   revalidatePath(`/claims/${claimId}`);
   revalidatePath("/claims");
   revalidatePath("/");
+}
+
+/**
+ * Drone orthomosaic ingestion — the high-resolution claim-evidence tier.
+ * Farmer uploads a georeferenced GeoTIFF from their drone-mapping app; we
+ * store it content-addressed, run the deterministic ExG/NDVI analysis
+ * (drone-rgb-exg), and emit a Field Condition Record through the SAME schema
+ * as satellite. Confidence is 0 (uncalibrated) until real labeled captures
+ * validate the pipeline — never invented.
+ */
+export async function ingestDroneOrtho(claimId: string, formData: FormData) {
+  const { op } = await requireWrite();
+  const db = await getDb();
+  const claim = (
+    await db.select().from(t.claims).where(and(eq(t.claims.id, claimId), eq(t.claims.operationId, op.id)))
+  )[0];
+  if (!claim) throw new Error("Unknown claim");
+  const field = (await db.select().from(t.fields).where(eq(t.fields.id, claim.fieldId)))[0];
+  if (!field) throw new Error("Unknown field");
+  if (!field.boundary) throw new Error("Set the field boundary before ingesting a drone orthomosaic.");
+
+  const file = formData.get("ortho") as File | null;
+  if (!file || file.size === 0) throw new Error("Choose a georeferenced orthomosaic (GeoTIFF).");
+  if (file.size > 200_000_000) throw new Error("Orthomosaic too large (200 MB max for upload).");
+  const hasNir = formData.get("hasNir") === "on";
+  const buf = Buffer.from(await file.arrayBuffer());
+  const sha256 = createHash("sha256").update(buf).digest("hex");
+
+  // durable content-addressed storage (sha256 IS the key)
+  const stored = await putObject(sha256, buf, file.type || "image/tiff");
+  const capId = id("cap");
+  await db.insert(t.imageryCaptures).values({
+    id: capId,
+    fieldId: field.id,
+    source: "drone",
+    capturedAt: String(formData.get("capturedAt") || now()),
+    lat: null,
+    lng: null,
+    fileName: file.name.replace(/[^\w.\-]/g, "_").slice(0, 160),
+    sha256,
+    bytes: buf.length,
+    storageUrl: stored.url,
+    storageBackend: stored.backend,
+    uploadedBy: op.id,
+    uploadedAt: now(),
+    metadata: { kind: "drone-orthomosaic", hasNir, methodology: DRONE_METHODOLOGY_VERSION },
+  });
+  await appendProvenance(db, "imagery_capture", capId, "ingested", {
+    claimId, fieldId: field.id, sha256, bytes: buf.length, source: "drone",
+  });
+
+  const a = await analyzeOrtho(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength), field.boundary, { hasNir });
+  if (!a.ok) {
+    await audit(op.id, "drone_analysis_unavailable", "claim", claimId, { reason: a.reason, capId });
+    revalidatePath(`/claims/${claimId}`);
+    return;
+  }
+
+  const season = claim.cropSeasonId
+    ? (await db.select().from(t.cropSeasons).where(eq(t.cropSeasons.id, claim.cropSeasonId)))[0]
+    : undefined;
+  const fcrId = id("fcr");
+  await db.insert(t.fieldConditionRecords).values({
+    id: fcrId,
+    fieldId: field.id,
+    cropSeasonId: claim.cropSeasonId,
+    observedAt: String(formData.get("capturedAt") || now()),
+    crop: season?.crop ?? "unknown",
+    growthStage: null,
+    conditionClass: a.affectedFrac >= 0.5 ? "damaged" : a.affectedFrac >= 0.15 ? "stressed" : "healthy",
+    damageType: claim.damageType,
+    severityPct: a.severityPct,
+    affectedAcres: a.affectedAcres,
+    affectedArea: (a.affectedArea as never) ?? null,
+    metrics: { ...a.stats, affected_frac: a.affectedFrac, effective_res_m: a.resolutionM, field_pixels: a.fieldPixels },
+    narrative: a.narrative,
+    confidence: 0, // uncalibrated pipeline — honest 0, not invented
+    captureIds: [capId],
+    imagerySha256: [sha256],
+    modelName: "drone-rgb-exg",
+    modelVersion: a.methodologyVersion.split("@")[1] ?? "0.1.0",
+    pipelineRunId: id("run"),
+    analyzedAt: now(),
+    reviewedBy: null,
+    supersedes: null, // drone is an independent finer-resolution view, not a supersede of satellite
+  });
+  await audit(op.id, "fcr_emitted", "field_condition_record", fcrId, {
+    claimId, model: a.methodologyVersion, tier: "drone", validationStatus: a.validationStatus,
+  });
+  await appendProvenance(db, "field_condition_record", fcrId, "emitted", {
+    claimId, model: a.methodologyVersion, paramsHash: a.paramsHash,
+    affectedFrac: a.affectedFrac, affectedAcres: a.affectedAcres, severityPct: a.severityPct,
+    resolutionM: a.resolutionM, imagerySha256: sha256, validationStatus: a.validationStatus,
+  });
+  await db
+    .update(t.claims)
+    .set({ status: "evidence", fcrIds: [...claim.fcrIds, fcrId] })
+    .where(eq(t.claims.id, claimId));
+  revalidatePath(`/claims/${claimId}`);
 }
 
 /** Record a confirmed real-world outcome — the ground-truth label flywheel.

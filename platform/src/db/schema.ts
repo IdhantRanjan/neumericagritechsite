@@ -212,6 +212,27 @@ export const claims = sqliteTable("claims", {
   createdAt: text("created_at").notNull(),
 });
 
+/**
+ * Sensor-routing decisions — the auditable record of WHICH sensor tier the
+ * platform selected for a given question and WHY. Deterministic rule output
+ * (src/lib/sensors/routing.ts), stored so an insurer can see the routing
+ * that produced a given number. One row per routing invocation.
+ */
+export const routingDecisions = sqliteTable("routing_decisions", {
+  id: text("id").primaryKey(),
+  operationId: text("operation_id").notNull().references(() => operations.id),
+  fieldId: text("field_id").references(() => fields.id),
+  claimId: text("claim_id").references(() => claims.id),
+  question: text("question").notNull(), // continuous_monitoring|claim_event|...
+  damageType: text("damage_type"),
+  primarySensor: text("primary_sensor").notNull(), // satellite|drone|phone
+  corroborating: text("corroborating", { mode: "json" }).$type<string[]>().notNull(),
+  rationale: text("rationale", { mode: "json" }).$type<string[]>().notNull(),
+  ruleVersion: text("rule_version").notNull(),
+  ruleHash: text("rule_hash").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+
 export const deadlineInstances = sqliteTable("deadline_instances", {
   id: text("id").primaryKey(),
   operationId: text("operation_id").notNull().references(() => operations.id),
