@@ -1,0 +1,130 @@
+Field: Home 80, 78.4 ac, DeKalb County IL
+Event date under test: 2023-06-20 (2023 IL flash drought)
+
+
+Assessment completed in 18.7s
+Stored observations for field: 57
+
+Time series (clear obs, NDVI mean):
+  2020-06-02  ndvi=0.344  clear=97%  scene=S2B_16TCM_20200602_0_L2A
+  2020-06-07  ndvi=0.350  clear=100%  scene=S2A_16TCM_20200607_1_L2A
+  2020-06-12  ndvi=0.378  clear=100%  scene=S2B_16TCM_20200612_1_L2A
+  2020-06-14  ndvi=0.381  clear=100%  scene=S2A_16TCM_20200614_2_L2A
+  2020-06-17  ndvi=0.370  clear=74%  scene=S2A_16TCM_20200617_0_L2A
+  2020-06-19  ndvi=0.362  clear=94%  scene=S2B_16TCM_20200619_0_L2A
+  2020-06-29  ndvi=0.377  clear=97%  scene=S2B_16TCM_20200629_0_L2A
+  2020-07-04  ndvi=0.432  clear=97%  scene=S2A_16TCM_20200704_0_L2A
+  2021-06-04  ndvi=0.412  clear=94%  scene=S2B_16TCM_20210604_0_L2A
+  2021-06-09  ndvi=0.456  clear=92%  scene=S2A_16TCM_20210609_0_L2A
+  2021-06-12  ndvi=0.486  clear=96%  scene=S2A_16TCM_20210612_0_L2A
+  2021-06-14  ndvi=0.503  clear=95%  scene=S2B_16TCM_20210614_0_L2A
+  2021-06-17  ndvi=0.461  clear=97%  scene=S2B_16TCM_20210617_0_L2A
+  2021-06-19  ndvi=0.481  clear=95%  scene=S2A_16TCM_20210619_0_L2A
+  2021-06-22  ndvi=0.571  clear=97%  scene=S2A_16TCM_20210622_0_L2A
+  2021-07-02  ndvi=0.628  clear=97%  scene=S2A_16TCM_20210702_0_L2A
+  2022-06-07  ndvi=0.447  clear=100%  scene=S2A_16TCM_20220607_0_L2A
+  2022-06-09  ndvi=0.463  clear=100%  scene=S2B_16TCM_20220609_0_L2A
+  2022-06-14  ndvi=0.658  clear=100%  scene=S2A_16TCM_20220614_0_L2A
+  2022-06-17  ndvi=0.440  clear=100%  scene=S2A_16TCM_20220617_0_L2A
+  2022-06-19  ndvi=0.430  clear=100%  scene=S2B_16TCM_20220619_0_L2A
+  2022-06-22  ndvi=0.428  clear=100%  scene=S2B_16TCM_20220622_0_L2A
+  2022-06-27  ndvi=0.459  clear=100%  scene=S2A_16TCM_20220627_0_L2A
+  2022-06-29  ndvi=0.449  clear=100%  scene=S2B_16TCM_20220629_0_L2A
+  2022-07-09  ndvi=0.561  clear=100%  scene=S2B_16TCM_20220709_0_L2A
+  2023-05-20  ndvi=0.394  clear=100%  scene=S2A_16TCM_20230520_0_L2A
+  2023-05-23  ndvi=0.385  clear=91%  scene=S2A_16TCM_20230523_0_L2A
+  2023-05-25  ndvi=0.396  clear=100%  scene=S2B_16TCM_20230525_0_L2A
+  2023-05-30  ndvi=0.351  clear=93%  scene=S2A_16TCM_20230530_0_L2A
+  2023-06-02  ndvi=0.351  clear=95%  scene=S2A_16TCM_20230602_1_L2A
+  2023-06-04  ndvi=0.406  clear=100%  scene=S2B_16TCM_20230604_0_L2A
+  2023-06-07  ndvi=0.389  clear=100%  scene=S2B_16TCM_20230607_0_L2A
+  2023-06-09  ndvi=0.378  clear=100%  scene=S2A_16TCM_20230609_0_L2A
+  2023-06-12  ndvi=0.379  clear=100%  scene=S2A_16TCM_20230612_0_L2A
+  2023-06-14  ndvi=0.339  clear=96%  scene=S2B_16TCM_20230614_0_L2A
+  2023-06-17  ndvi=0.399  clear=100%  scene=S2B_16TCM_20230617_0_L2A
+  2023-06-24  ndvi=0.359  clear=100%  scene=S2B_16TCM_20230624_0_L2A
+  2023-06-27  ndvi=0.205  clear=100%  scene=S2B_16TCM_20230627_0_L2A
+  2023-07-07  ndvi=0.360  clear=87%  scene=S2B_16TCM_20230707_0_L2A
+  2023-07-09  ndvi=0.379  clear=91%  scene=S2A_16TCM_20230709_0_L2A
+  2023-07-14  ndvi=0.470  clear=100%  scene=S2B_16TCM_20230714_0_L2A
+  2023-07-17  ndvi=0.484  clear=100%  scene=S2B_16TCM_20230717_0_L2A
+  2023-07-19  ndvi=0.457  clear=88%  scene=S2A_16TCM_20230719_0_L2A
+
+=== DAMAGE ASSESSMENT ===
+{
+  "ok": true,
+  "eventDate": "2023-06-20",
+  "significant": true,
+  "extent": "region-wide",
+  "persistence": "persistent",
+  "conditionClass": "damaged",
+  "severityPct": 62,
+  "affectedFrac": 1,
+  "affectedAcres": 78.8,
+  "confidence": 0.95,
+  "confidenceFactors": {
+    "clear": 1,
+    "baseline": 1,
+    "effect": 1
+  },
+  "metrics": {
+    "ndvi_pre_mean": 0.3985,
+    "ndvi_post_mean": 0.2048,
+    "ndvi_delta_field": -0.1937,
+    "ndvi_delta_region": -0.1935,
+    "ndvi_expected_doy": 0.4622,
+    "ndvi_sigma_doy": 0.0803,
+    "field_z_score": -3.205,
+    "affected_frac": 1,
+    "acute_drop_frac": 0.3062,
+    "expectation_deficit_frac": 0.931,
+    "severity_mean": 0.6156,
+    "clear_frac_pre": 1,
+    "clear_frac_post": 1,
+    "water_frac_pre": 0,
+    "water_frac_post": 0,
+    "baseline_obs_n": 19,
+    "comparable_pixels": 3187,
+    "follow_up_z_score": -1.5494
+  },
+  "narrative": "Sentinel-2 change detection: between 2023-06-17 and 2023-06-27, mean field NDVI moved -0.19 (0.40 → 0.20) while the surrounding 1.5 km region moved -0.19. The field's own 2020/2021/2022 same-date expectation is 0.46 (σ 0.08); this observation sits -3.2σ below it. 100% of comparable pixels are affected (31% acute pre→post drop, 93% below multi-year expectation), region-wide pattern, mean relative severity 62%. The deficit persists in the next clear pass (2023-07-07, -1.5σ below expectation).",
+  "trace": {
+    "methodologyVersion": "s2-l2a-cd@1.0.0",
+    "paramsHash": "e1c2fd220891a2870be2f03f62a1063a49e419be785829c56cc506878f89134a",
+    "preScene": {
+      "id": "S2B_16TCM_20230617_0_L2A",
+      "datetime": "2023-06-17T17:02:00.619000Z",
+      "refHash": "8fb6a5e2a59854d41e5cf5fcb83ca5176e63ed69b7c47feaaf2d4336d7753b2d"
+    },
+    "postScene": {
+      "id": "S2B_16TCM_20230627_0_L2A",
+      "datetime": "2023-06-27T17:02:00.727000Z",
+      "refHash": "f7fb235e83540dddf5db3302124306b1901205cb8493c8eaee3ed6db06f22e06"
+    },
+    "temporalBaseline": {
+      "n": 19,
+      "mean": 0.4622,
+      "sigma": 0.0803,
+      "yearsUsed": [
+        2020,
+        2021,
+        2022
+      ],
+      "window": {
+        "doy": 178,
+        "plusMinus": 15
+      }
+    },
+    "regional": {
+      "preMean": 0.4298,
+      "postMean": 0.2363,
+      "delta": -0.1935,
+      "clearFracPre": 1,
+      "clearFracPost": 0.9996,
+      "ringM": 1500,
+      "sampleResM": 40
+    },
+    "scenesConsidered": 22
+  }
+}
+affectedArea: MultiPolygon, 15 rects

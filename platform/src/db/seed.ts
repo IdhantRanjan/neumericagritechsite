@@ -13,13 +13,18 @@ import type { DB } from "./index";
 const now = () => new Date().toISOString();
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 
-/** Rough rectangle-ish field boundary near a lng/lat centroid (demo only). */
-function demoBoundary(lng: number, lat: number, w = 0.008, h = 0.005): t.GeoJSONPolygon {
+/** Rectangular boundary around a centroid sized to the stated acreage (demo only). */
+function demoBoundary(lng: number, lat: number, acres: number): t.GeoJSONPolygon {
+  const m2 = acres * 4046.8564224;
+  const widthM = Math.sqrt(m2 * 1.5); // 1.5:1 aspect, like a typical quarter-section split
+  const heightM = m2 / widthM;
+  const dLng = widthM / 2 / (111320 * Math.cos((lat * Math.PI) / 180));
+  const dLat = heightM / 2 / 110574;
   return {
     type: "Polygon",
     coordinates: [[
-      [lng - w, lat - h], [lng + w, lat - h * 0.9], [lng + w * 1.05, lat + h],
-      [lng - w * 0.9, lat + h * 0.95], [lng - w, lat - h],
+      [lng - dLng, lat - dLat], [lng + dLng, lat - dLat], [lng + dLng, lat + dLat],
+      [lng - dLng, lat + dLat], [lng - dLng, lat - dLat],
     ]],
   };
 }
@@ -52,7 +57,7 @@ export async function seedIfEmpty(db: DB) {
   for (const f of fieldRows) {
     await db.insert(t.fields).values({
       id: f.id, operationId: OP, name: f.name, county: f.county, acres: f.acres,
-      boundary: demoBoundary(f.lng, f.lat, 0.008 * Math.sqrt(f.acres / 80), 0.005 * Math.sqrt(f.acres / 80)),
+      boundary: demoBoundary(f.lng, f.lat, f.acres),
       fsaFarmNumber: f.farm, fsaTractNumber: f.tract, fsaFieldNumber: f.fld,
     });
   }

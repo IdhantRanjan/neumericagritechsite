@@ -1,0 +1,1 @@
+ALTER TABLE `field_condition_records` ADD `narrative` text;

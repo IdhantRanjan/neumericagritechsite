@@ -6,10 +6,14 @@ import {
   getSeasonsByField,
   getCapturesByField,
   getFcrsByField,
+  getSceneObservations,
+  getTriggerEvaluations,
 } from "@/lib/data";
 import { FieldShape, Meta, PageHeader, Tag } from "@/components/ui";
+import { SatellitePanel } from "@/components/satellite-panel";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 300; // satellite scans fetch real scenes
 
 const fmt = (iso: string) =>
   new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -19,10 +23,12 @@ export default async function FieldDetail({ params }: { params: Promise<{ id: st
   const op = await requireOperation();
   const field = await getField(id, op.id);
   if (!field) notFound();
-  const [seasons, captures, fcrs] = await Promise.all([
+  const [seasons, captures, fcrs, observations, triggerEvals] = await Promise.all([
     getSeasonsByField(id),
     getCapturesByField(id),
     getFcrsByField(id),
+    getSceneObservations(id),
+    getTriggerEvaluations(id),
   ]);
 
   return (
@@ -54,6 +60,12 @@ export default async function FieldDetail({ params }: { params: Promise<{ id: st
         </div>
 
         <div className="space-y-8">
+          <SatellitePanel
+            field={field}
+            observations={observations}
+            triggerEvals={triggerEvals}
+            isDemo={op.isDemo}
+          />
           <section>
             <h2 className="text-xl mb-4">Condition records</h2>
             {fcrs.length === 0 ? (

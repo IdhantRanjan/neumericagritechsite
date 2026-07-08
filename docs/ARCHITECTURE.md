@@ -1,7 +1,7 @@
 # Neumeric — System Architecture
 
-**Status:** v1 draft · July 2026 · covers all three pillars, built in Pillar-1-first order.
-**Companion docs:** [ROADMAP.md](ROADMAP.md) (phasing) · [DEPENDENCIES.md](DEPENDENCIES.md) (legal/partnership blockers).
+**Status:** v1.1 · July 2026 · covers all three pillars, built in Pillar-1-first order.
+**Companion docs:** [ROADMAP.md](ROADMAP.md) (phasing) · [DEPENDENCIES.md](DEPENDENCIES.md) (legal/partnership blockers) · [ENGINES.md](ENGINES.md) (the six technical cores: satellite CV, ML flywheel, yield estimation, Monte Carlo marketing, parametric triggers, provenance chain — methods, determinism guarantees, and limitations).
 
 The one-sentence architecture: **a single verified data object — the Field Condition Record — produced by one shared CV pipeline, consumed by three financial products.** Everything below exists to produce, protect, or monetize that object.
 

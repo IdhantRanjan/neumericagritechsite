@@ -9,9 +9,22 @@ import { cookies } from "next/headers";
 import { and, eq } from "drizzle-orm";
 import { getDb, tables as t } from "@/db";
 import { demoAnalyzer } from "@/lib/cv/demo-analyzer";
+import { primaryModelFor } from "@/lib/cv/registry";
 import { applicableRules } from "@/lib/rules/deadlines";
 import { matchPrograms, type OperationProfile } from "@/lib/rules/programs";
 import { requireOperation, WS_COOKIE } from "@/lib/current-op";
+import { scanField } from "@/lib/satellite/scan";
+import { ringAcres, ringToUtm, epsgForLngLat, approxRectBoundary } from "@/lib/satellite/geo";
+import { appendProvenance } from "@/lib/provenance";
+import { putObject } from "@/lib/storage";
+import {
+  defaultDroughtStressMethodology,
+  evaluateTrigger,
+  evaluateWeatherCounterpart,
+  basisRiskGap,
+  methodologyHash,
+} from "@/lib/parametric";
+import type { GeoJSONPolygon } from "@/db/schema";
 
 const now = () => new Date().toISOString();
 const id = (prefix: string) => `${prefix}_${randomUUID().slice(0, 8)}`;
@@ -236,17 +249,18 @@ export async function addEvidence(claimId: string, formData: FormData) {
   let sha256: string;
   let bytes: number;
 
+  let storageUrl: string | null = null;
+  let storageBackend: string = "local";
   if (file && file.size > 0) {
     if (file.size > 25_000_000) throw new Error("Photo too large (25 MB max)");
     const buf = Buffer.from(await file.arrayBuffer());
     sha256 = createHash("sha256").update(buf).digest("hex");
     bytes = buf.length;
     fileName = file.name.replace(/[^\w.\-]/g, "_").slice(0, 140);
-    // Serverless: /tmp (set UPLOAD_DIR) until durable object storage (S3/R2)
-    // lands — the sha256 in the capture record is the permanent integrity anchor
-    const dir = process.env.UPLOAD_DIR ?? path.join(process.cwd(), ".data", "uploads");
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, sha256), buf);
+    // content-addressed durable storage: the sha256 IS the storage key
+    const stored = await putObject(sha256, buf, file.type || "image/jpeg");
+    storageUrl = stored.url;
+    storageBackend = stored.backend;
   } else {
     fileName = `sample_${claim.damageType}_${captureId}.jpg`;
     sha256 = createHash("sha256").update("sample:" + captureId).digest("hex");
@@ -263,9 +277,19 @@ export async function addEvidence(claimId: string, formData: FormData) {
     fileName,
     sha256,
     bytes,
+    storageUrl,
+    storageBackend,
     uploadedBy: op.id,
     uploadedAt: now(),
     metadata: file && file.size > 0 ? { origin: "upload" } : { origin: "synthesized sample" },
+  });
+  await appendProvenance(db, "imagery_capture", captureId, "ingested", {
+    claimId,
+    fieldId: claim.fieldId,
+    sha256,
+    bytes,
+    fileName,
+    storageBackend,
   });
   await audit(op.id, "imagery_ingested", "imagery_capture", captureId, { claimId, sha256 });
 
@@ -319,6 +343,14 @@ export async function addEvidence(claimId: string, formData: FormData) {
   await audit(op.id, "fcr_emitted", "field_condition_record", fcrId, {
     claimId,
     model: `${demoAnalyzer.name}@${demoAnalyzer.version}`,
+  });
+  await appendProvenance(db, "field_condition_record", fcrId, "emitted", {
+    claimId,
+    model: `${demoAnalyzer.name}@${demoAnalyzer.version}`,
+    severityPct: out.severityPct,
+    affectedAcres: out.affectedAcres,
+    metrics: out.metrics,
+    imagerySha256: captures.map((c) => c.sha256),
   });
 
   await db
@@ -461,4 +493,330 @@ export async function setTargetStatus(targetId: string, status: string) {
   await db.update(t.marketingPlanTargets).set({ status }).where(eq(t.marketingPlanTargets.id, targetId));
   await audit(op.id, "plan_target_status", "marketing_plan_target", targetId, { status });
   revalidatePath("/marketing");
+}
+
+// ————— Hard cores: satellite analysis, boundaries, labels, triggers —————
+
+/** Set a field boundary: paste a GeoJSON Polygon, or approximate from center + acres. */
+export async function setFieldBoundary(fieldId: string, formData: FormData) {
+  const op = await requireOperation();
+  const db = await getDb();
+  const field = (
+    await db.select().from(t.fields).where(and(eq(t.fields.id, fieldId), eq(t.fields.operationId, op.id)))
+  )[0];
+  if (!field) throw new Error("Unknown field");
+
+  let boundary: GeoJSONPolygon | null = null;
+  let approximate = false;
+  const geojsonRaw = String(formData.get("geojson") ?? "").trim();
+  if (geojsonRaw) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(geojsonRaw);
+    } catch {
+      throw new Error("Boundary is not valid JSON");
+    }
+    // accept Polygon, Feature<Polygon>, or FeatureCollection with one polygon
+    const g = parsed as { type?: string; geometry?: unknown; features?: Array<{ geometry?: unknown }> };
+    const geom = (g.type === "Polygon" ? g : g.type === "Feature" ? g.geometry : g.features?.[0]?.geometry) as
+      | GeoJSONPolygon
+      | undefined;
+    if (!geom || geom.type !== "Polygon" || !Array.isArray(geom.coordinates?.[0]) || geom.coordinates[0].length < 4)
+      throw new Error("Provide a GeoJSON Polygon (or a Feature containing one)");
+    const ring = geom.coordinates[0];
+    for (const pt of ring) {
+      if (!Array.isArray(pt) || Math.abs(pt[0]) > 180 || Math.abs(pt[1]) > 90)
+        throw new Error("Boundary coordinates must be [longitude, latitude]");
+    }
+    boundary = { type: "Polygon", coordinates: [ring] };
+  } else {
+    const lat = Number(formData.get("lat"));
+    const lng = Number(formData.get("lng"));
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180)
+      throw new Error("Enter the field's center latitude and longitude");
+    boundary = approxRectBoundary(lng, lat, field.acres);
+    approximate = true;
+  }
+
+  const c0 = boundary.coordinates[0][0];
+  const utm = ringToUtm(boundary, epsgForLngLat(c0[0], c0[1]));
+  const acres = Math.round(ringAcres(utm.ring) * 10) / 10;
+  if (acres < 0.5 || acres > 100_000) throw new Error(`Boundary computes to ${acres} acres — check the coordinates`);
+
+  await db.update(t.fields).set({ boundary, acres: approximate ? field.acres : acres }).where(eq(t.fields.id, fieldId));
+  await audit(op.id, "boundary_set", "field", fieldId, { acres, approximate });
+  revalidatePath(`/fields/${fieldId}`);
+  revalidatePath("/fields");
+}
+
+/**
+ * Scan a batch of Sentinel-2 scenes for a field. Bounded per invocation so
+ * it fits serverless limits — the button says how much is left; clicking
+ * again continues. Scans the current season first, then walks back a year
+ * at a time so baselines accumulate.
+ */
+export async function scanFieldAction(fieldId: string) {
+  const op = await requireOperation();
+  const db = await getDb();
+  const field = (
+    await db.select().from(t.fields).where(and(eq(t.fields.id, fieldId), eq(t.fields.operationId, op.id)))
+  )[0];
+  if (!field) throw new Error("Unknown field");
+  if (!field.boundary) throw new Error("Add a boundary first");
+
+  const thisYear = new Date().getFullYear();
+  let budget = 20; // scenes per click
+  const results: Array<{ year: number; observed: number; searched: number }> = [];
+  for (let y = thisYear; y >= thisYear - 3 && budget > 0; y--) {
+    const r = await scanField(db, field, `${y}-04-01`, y === thisYear ? new Date().toISOString().slice(0, 10) : `${y}-10-31`, {
+      maxScenes: budget,
+    });
+    results.push({ year: y, observed: r.observed, searched: r.searched });
+    budget -= r.observed;
+    if (r.failed.length > 0 && r.observed === 0) break; // network trouble — stop burning the budget
+  }
+  await audit(op.id, "satellite_scan", "field", fieldId, { results });
+  revalidatePath(`/fields/${fieldId}`);
+  revalidatePath("/marketing");
+}
+
+/**
+ * Satellite damage analysis for a claim — THE primary evidence path for
+ * real operations (the demo stub is registry-barred from them). Emits a
+ * Field Condition Record with the full detection trace, reference captures
+ * for the exact scenes used, and provenance-chain entries for all of it.
+ */
+export async function analyzeClaimSatellite(claimId: string) {
+  const op = await requireOperation();
+  const db = await getDb();
+  const claim = (
+    await db.select().from(t.claims).where(and(eq(t.claims.id, claimId), eq(t.claims.operationId, op.id)))
+  )[0];
+  if (!claim) throw new Error("Unknown claim");
+  const field = (await db.select().from(t.fields).where(eq(t.fields.id, claim.fieldId)))[0];
+  if (!field) throw new Error("Unknown field");
+
+  const model = primaryModelFor(op.isDemo);
+  const assessment = await model.assess(db, field, claim.eventDate);
+
+  if (!assessment.ok) {
+    // no fabricated record on failure — the reason is surfaced in the UI via audit trail
+    await audit(op.id, "satellite_analysis_unavailable", "claim", claimId, {
+      reason: assessment.reason,
+    });
+    revalidatePath(`/claims/${claimId}`);
+    return;
+  }
+
+  // reference captures for the exact scenes the assessment used
+  const captureIds: string[] = [];
+  const sceneHashes: string[] = [];
+  for (const scene of [assessment.trace.preScene, assessment.trace.postScene]) {
+    if (!scene) continue;
+    const capId = id("cap");
+    captureIds.push(capId);
+    sceneHashes.push(scene.refHash);
+    await db
+      .insert(t.imageryCaptures)
+      .values({
+        id: capId,
+        fieldId: field.id,
+        source: "satellite",
+        capturedAt: scene.datetime,
+        lat: null,
+        lng: null,
+        fileName: scene.id,
+        sha256: scene.refHash, // deterministic reference hash (public immutable archive)
+        bytes: 0,
+        storageUrl: null,
+        storageBackend: "reference",
+        uploadedBy: "pipeline",
+        uploadedAt: now(),
+        metadata: {
+          kind: "sentinel-2-scene-reference",
+          note: "Scene referenced from the public Sentinel-2 archive; refHash identifies the exact assets analyzed.",
+        },
+      })
+      .onConflictDoNothing();
+    await appendProvenance(db, "imagery_capture", capId, "scene_referenced", scene);
+  }
+
+  const season = claim.cropSeasonId
+    ? (await db.select().from(t.cropSeasons).where(eq(t.cropSeasons.id, claim.cropSeasonId)))[0]
+    : undefined;
+  const fcrId = id("fcr");
+  await db.insert(t.fieldConditionRecords).values({
+    id: fcrId,
+    fieldId: field.id,
+    cropSeasonId: claim.cropSeasonId,
+    observedAt: assessment.trace.postScene?.datetime ?? now(),
+    crop: season?.crop ?? "unknown",
+    growthStage: null, // satellite change detection doesn't stage the crop — stated, not guessed
+    conditionClass: assessment.conditionClass,
+    damageType: claim.damageType,
+    severityPct: assessment.significant ? assessment.severityPct : 0,
+    affectedAcres: assessment.significant ? assessment.affectedAcres : 0,
+    affectedArea: (assessment.affectedArea as never) ?? null,
+    metrics: {
+      ...assessment.metrics,
+      significant: assessment.significant ? 1 : 0,
+      extent_localized: assessment.extent === "localized" ? 1 : 0,
+      persistence_persistent: assessment.persistence === "persistent" ? 1 : 0,
+    },
+    narrative: assessment.narrative,
+    confidence: assessment.confidence,
+    captureIds,
+    imagerySha256: sceneHashes,
+    modelName: model.name,
+    modelVersion: model.version,
+    pipelineRunId: id("run"),
+    analyzedAt: now(),
+    reviewedBy: null,
+    supersedes: claim.fcrIds.at(-1) ?? null,
+  });
+  await audit(op.id, "fcr_emitted", "field_condition_record", fcrId, {
+    claimId,
+    model: `${model.name}@${model.version}`,
+    significant: assessment.significant,
+  });
+  await appendProvenance(db, "field_condition_record", fcrId, "emitted", {
+    claimId,
+    model: `${model.name}@${model.version}`,
+    assessment: {
+      significant: assessment.significant,
+      extent: assessment.extent,
+      persistence: assessment.persistence,
+      severityPct: assessment.severityPct,
+      affectedAcres: assessment.affectedAcres,
+      confidence: assessment.confidence,
+      metrics: assessment.metrics,
+      trace: assessment.trace,
+    },
+  });
+
+  await db
+    .update(t.claims)
+    .set({ status: "evidence", fcrIds: [...claim.fcrIds, fcrId] })
+    .where(eq(t.claims.id, claimId));
+  revalidatePath(`/claims/${claimId}`);
+  revalidatePath("/claims");
+  revalidatePath("/");
+}
+
+/** Record a confirmed real-world outcome — the ground-truth label flywheel. */
+export async function recordOutcome(claimId: string, formData: FormData) {
+  const op = await requireOperation();
+  const db = await getDb();
+  const claim = (
+    await db.select().from(t.claims).where(and(eq(t.claims.id, claimId), eq(t.claims.operationId, op.id)))
+  )[0];
+  if (!claim) throw new Error("Unknown claim");
+  const labelType = String(formData.get("labelType"));
+  const value = Number(formData.get("value"));
+  const unitByType: Record<string, string> = {
+    farmer_damage_pct: "pct",
+    adjuster_settlement_pct: "pct",
+    harvested_yield_bu_ac: "bu_per_acre",
+  };
+  if (!(labelType in unitByType) || !Number.isFinite(value) || value < 0) return;
+
+  const labelId = id("lbl");
+  await db.insert(t.groundTruthLabels).values({
+    id: labelId,
+    operationId: op.id,
+    fieldId: claim.fieldId,
+    claimId,
+    fcrId: claim.fcrIds.at(-1) ?? null,
+    labelType,
+    value,
+    unit: unitByType[labelType],
+    source: String(formData.get("source") ?? "farmer"),
+    notes: String(formData.get("notes") ?? "").slice(0, 500) || null,
+    recordedBy: op.id,
+    recordedAt: now(),
+  });
+  await audit(op.id, "ground_truth_recorded", "ground_truth_label", labelId, { claimId, labelType, value });
+  await appendProvenance(db, "ground_truth_label", labelId, "recorded", {
+    claimId,
+    fieldId: claim.fieldId,
+    fcrId: claim.fcrIds.at(-1) ?? null,
+    labelType,
+    value,
+  });
+  revalidatePath(`/claims/${claimId}`);
+}
+
+/**
+ * Evaluate a sample parametric trigger over the field's stored observations
+ * for a window, alongside the weather-index counterpart (the basis-risk
+ * comparison). Creates an inactive demo definition on first use — real
+ * definitions require a carrier partner (docs/DEPENDENCIES.md §5/§6).
+ */
+export async function evaluateTriggerAction(fieldId: string, formData: FormData) {
+  const op = await requireOperation();
+  const db = await getDb();
+  const field = (
+    await db.select().from(t.fields).where(and(eq(t.fields.id, fieldId), eq(t.fields.operationId, op.id)))
+  )[0];
+  if (!field) throw new Error("Unknown field");
+
+  const from = String(formData.get("from") ?? "");
+  const to = String(formData.get("to") ?? "");
+  const threshold = Number(formData.get("threshold") ?? 0.35);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from >= to)
+    throw new Error("Enter a valid from/to window");
+  if (!Number.isFinite(threshold) || threshold <= 0 || threshold >= 1) throw new Error("Threshold must be in (0,1)");
+
+  const m = defaultDroughtStressMethodology(threshold);
+  const mHash = methodologyHash(m);
+
+  // one demo definition per field+methodology, always inactive (no carrier)
+  const defId = `tdef_${fieldId}_${mHash.slice(0, 8)}`;
+  await db
+    .insert(t.triggerDefinitions)
+    .values({
+      id: defId,
+      fieldId,
+      version: 1,
+      metric: m.metric,
+      comparator: m.comparator,
+      threshold: m.threshold,
+      consecutiveObservations: m.consecutiveObservations,
+      imagerySourceClass: m.imagerySourceClass,
+      carrierContractRef: null, // ← the hard gate: no carrier, no active trigger
+      methodologyParams: m as unknown as Record<string, unknown>,
+      methodologyHash: mHash,
+      active: false,
+    })
+    .onConflictDoNothing();
+
+  const evaluation = await evaluateTrigger(db, field, defId, m, from, to);
+
+  // weather-index counterpart + gap, attached to the stored evaluation
+  const weather = await evaluateWeatherCounterpart(field, from, to);
+  const gap = basisRiskGap(evaluation.fired, weather.weatherFired);
+  const row = (
+    await db.select().from(t.triggerEvaluations).where(eq(t.triggerEvaluations.id, evaluation.evaluationId))
+  )[0];
+  await db
+    .update(t.triggerEvaluations)
+    .set({
+      calculationTrace: {
+        ...row.calculationTrace,
+        weatherCounterpart: weather as unknown as Record<string, unknown>,
+        basisRiskGap: gap,
+      },
+    })
+    .where(eq(t.triggerEvaluations.id, evaluation.evaluationId));
+  await appendProvenance(db, "trigger_evaluation", evaluation.evaluationId, "weather_counterpart_attached", {
+    weather,
+    gap,
+  });
+  await audit(op.id, "trigger_evaluated", "trigger_evaluation", evaluation.evaluationId, {
+    fieldId,
+    fired: evaluation.fired,
+    weatherFired: weather.weatherFired,
+    gap: gap.gap,
+  });
+  revalidatePath(`/fields/${fieldId}`);
 }

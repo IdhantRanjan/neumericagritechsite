@@ -14,6 +14,8 @@ import {
   getCapturesByField,
 } from "@/lib/data";
 import { FieldShape, Tag } from "@/components/ui";
+import { getDb } from "@/db";
+import { verifyChain, entriesFor } from "@/lib/provenance";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +38,9 @@ export default async function PacketPage({ params }: { params: Promise<{ id: str
   const fcrs = (await Promise.all(claim.fcrIds.map((f) => getFcr(f)))).filter(Boolean);
   const latest = fcrs.at(-1);
   const isDemo = op.isDemo || latest?.modelName === "demo-analyzer";
+  const db = await getDb();
+  const chain = await verifyChain(db);
+  const fcrEntries = latest ? await entriesFor(db, latest.id) : [];
 
   return (
     <div className="max-w-[820px] mx-auto">
@@ -158,11 +163,44 @@ export default async function PacketPage({ params }: { params: Promise<{ id: str
               ? `The analysis was reviewed and signed off by ${latest.reviewedBy}.`
               : "Human review pending."}
           </p>
+          {latest.narrative && (
+            <p className="text-[14px] text-ink-soft mt-3 leading-relaxed">{latest.narrative}</p>
+          )}
           {latest.modelName === "demo-analyzer" && (
             <p className="mt-3"><Tag tone="demo">Demo analyzer — not a real crop assessment</Tag></p>
           )}
         </section>
       )}
+
+      <section className="py-8 border-b border-ash">
+        <h2 className="text-xl mb-3">Integrity verification</h2>
+        <p className="text-[15px] leading-relaxed">
+          Every evidence record in this packet is committed to an append-only,
+          hash-chained provenance log: each entry cryptographically commits to the one before
+          it, so altering any historical record breaks every later hash.
+        </p>
+        <div className="mt-3 flex items-center gap-3 flex-wrap">
+          <Tag tone={chain.ok ? "strong" : "damaged"}>
+            {chain.ok ? `Chain verified — ${chain.entries} entries intact` : `CHAIN BROKEN: ${chain.problem}`}
+          </Tag>
+          {chain.headHash && (
+            <span className="font-mono text-[12px] text-ink-soft break-all">
+              head {chain.headHash.slice(0, 32)}…
+            </span>
+          )}
+        </div>
+        {fcrEntries.length > 0 && (
+          <p className="text-[13px] text-ink-soft mt-3 font-mono">
+            This condition record: chain seq {fcrEntries.map((e) => `#${e.seq}`).join(", ")} ·
+            payload sha256 {fcrEntries[0].payloadSha256.slice(0, 24)}…
+          </p>
+        )}
+        <p className="text-[13px] text-ink-soft mt-2">
+          Verification is server-side today (HMAC-signed entries); independent third-party
+          verifiability via external timestamping (RFC 3161) is on the roadmap and noted in the
+          methodology docs.
+        </p>
+      </section>
 
       <footer className="py-8">
         <p className="text-[13px] text-ink-soft leading-relaxed">

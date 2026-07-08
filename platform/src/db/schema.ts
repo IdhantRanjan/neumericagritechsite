@@ -9,7 +9,7 @@
  * TriggerEvaluation, AuditEvent) are append-only by convention: no UPDATE
  * paths exist in the app; corrections append a new row via `supersedes`.
  */
-import { sqliteTable, text, real, integer } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, real, integer, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 // ————— Farm & land —————
 
@@ -69,8 +69,10 @@ export const imageryCaptures = sqliteTable("imagery_captures", {
   lat: real("lat"),
   lng: real("lng"),
   fileName: text("file_name").notNull(),
-  sha256: text("sha256").notNull(), // content hash = tamper-evidence primitive
+  sha256: text("sha256").notNull(), // content hash = tamper-evidence primitive AND storage key
   bytes: integer("bytes").notNull(),
+  storageUrl: text("storage_url"), // durable object-storage URL (null = local/dev or reference-only)
+  storageBackend: text("storage_backend"), // vercel-blob | local | reference (satellite scenes)
   uploadedBy: text("uploaded_by").notNull(),
   uploadedAt: text("uploaded_at").notNull(),
   metadata: text("metadata", { mode: "json" }).$type<Record<string, unknown>>(),
@@ -87,19 +89,97 @@ export const fieldConditionRecords = sqliteTable("field_condition_records", {
   damageType: text("damage_type"), // hail|flood|drought|wind|disease|pest|other
   severityPct: real("severity_pct"),
   affectedAcres: real("affected_acres"),
-  affectedArea: text("affected_area", { mode: "json" }).$type<GeoJSONPolygon>(),
+  affectedArea: text("affected_area", { mode: "json" }).$type<GeoJSONPolygon | GeoJSONMultiPolygon>(),
   // open metric bag: ndvi_mean, exg_mean, stand_count_per_acre, canopy_cover_pct...
   metrics: text("metrics", { mode: "json" }).$type<Record<string, number>>().notNull(),
   confidence: real("confidence").notNull(),
   // provenance — what makes this record evidence rather than an opinion
   captureIds: text("capture_ids", { mode: "json" }).$type<string[]>().notNull(),
   imagerySha256: text("imagery_sha256", { mode: "json" }).$type<string[]>().notNull(),
+  // plain-language finding, adjuster-legible (generated from the trace, never free-form)
+  narrative: text("narrative"),
   modelName: text("model_name").notNull(),
   modelVersion: text("model_version").notNull(),
   pipelineRunId: text("pipeline_run_id").notNull(),
   analyzedAt: text("analyzed_at").notNull(),
   reviewedBy: text("reviewed_by"), // human sign-off; required for claim packets in Phase 1
   supersedes: text("supersedes"), // append-only corrections
+});
+
+/**
+ * Per-scene, per-field satellite observation — the atomic unit of the
+ * remote-sensing layer. One row = one Sentinel-2 scene's index statistics
+ * over one field boundary, cloud-masked via SCL, with full provenance.
+ * Append-only; unique per (field, scene, methodology version) so a
+ * methodology upgrade re-observes without rewriting history.
+ */
+export const sceneObservations = sqliteTable(
+  "scene_observations",
+  {
+    id: text("id").primaryKey(),
+    fieldId: text("field_id").notNull().references(() => fields.id),
+    sceneId: text("scene_id").notNull(), // STAC item id, e.g. S2B_16TCM_20230704_0_L2A
+    source: text("source").notNull().default("earth-search/sentinel-2-l2a"),
+    acquiredAt: text("acquired_at").notNull(),
+    year: integer("year").notNull(),
+    doy: integer("doy").notNull(), // day of year, for phenology baselines
+    epsg: integer("epsg").notNull(),
+    cloudCoverScene: real("cloud_cover_scene"), // scene-level eo:cloud_cover %
+    clearFrac: real("clear_frac").notNull(), // field-level clear-pixel fraction (SCL)
+    waterFrac: real("water_frac"), // SCL water fraction (flood signal)
+    validPixels: integer("valid_pixels").notNull(),
+    totalPixels: integer("total_pixels").notNull(),
+    // index statistics over clear field pixels: ndvi_mean/median/p10/p90/std,
+    // evi_mean, ndre_mean, frac_below_040 ...
+    stats: text("stats", { mode: "json" }).$type<Record<string, number>>().notNull(),
+    // sha256 of the canonical scene reference (item id + asset hrefs + datetime):
+    // deterministic identity for imagery we reference but don't copy
+    sceneRefHash: text("scene_ref_hash").notNull(),
+    methodologyVersion: text("methodology_version").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [uniqueIndex("scene_obs_unique").on(t.fieldId, t.sceneId, t.methodologyVersion)]
+);
+
+/**
+ * Ground-truth labels — the ML flywheel's compounding asset. Each row links
+ * a confirmed real-world outcome (farmer-reported damage, adjuster
+ * settlement, actual harvested yield) to the field/event/imagery it
+ * describes, so index features can be joined into training data.
+ */
+export const groundTruthLabels = sqliteTable("ground_truth_labels", {
+  id: text("id").primaryKey(),
+  operationId: text("operation_id").notNull().references(() => operations.id),
+  fieldId: text("field_id").notNull().references(() => fields.id),
+  claimId: text("claim_id").references(() => claims.id),
+  fcrId: text("fcr_id"), // the FCR whose prediction this label grades
+  labelType: text("label_type").notNull(), // farmer_damage_pct | adjuster_settlement_pct | harvested_yield_bu_ac
+  value: real("value").notNull(),
+  unit: text("unit").notNull(), // pct | bu_per_acre | usd
+  source: text("source").notNull(), // farmer | adjuster | scale_ticket | fsa_report
+  notes: text("notes"),
+  recordedBy: text("recorded_by").notNull(),
+  recordedAt: text("recorded_at").notNull(),
+});
+
+/**
+ * Tamper-evident provenance chain. Every money-relevant artifact (imagery
+ * capture, field condition record, trigger evaluation, ground-truth label)
+ * appends an entry committing to the previous entry's hash — altering any
+ * historical record breaks every subsequent hash. HMAC-signed with a server
+ * key; external RFC-3161 timestamping is the documented next step.
+ */
+export const provenanceEntries = sqliteTable("provenance_entries", {
+  seq: integer("seq").primaryKey({ autoIncrement: true }),
+  id: text("id").notNull().unique(),
+  entityType: text("entity_type").notNull(),
+  entityId: text("entity_id").notNull(),
+  action: text("action").notNull(),
+  payloadSha256: text("payload_sha256").notNull(), // hash of canonical entity payload
+  prevEntryHash: text("prev_entry_hash").notNull(), // "genesis" for the first entry
+  entryHash: text("entry_hash").notNull(), // sha256(seq|prev|payload|entity|at)
+  hmac: text("hmac").notNull(), // HMAC-SHA256(entryHash, PROVENANCE_KEY)
+  at: text("at").notNull(),
 });
 
 // ————— Pillar 1: insurance advocate —————
@@ -166,6 +246,11 @@ export const triggerDefinitions = sqliteTable("trigger_definitions", {
   consecutiveObservations: integer("consecutive_observations").notNull().default(2),
   imagerySourceClass: text("imagery_source_class").notNull(), // satellite|drone|any
   carrierContractRef: text("carrier_contract_ref"), // signed methodology doc
+  // The locked methodology: full parameter set + its canonical-JSON sha256.
+  // An evaluation is only valid against the exact hash it was defined with —
+  // this is what makes a payout dispute resolvable byte-for-byte.
+  methodologyParams: text("methodology_params", { mode: "json" }).$type<Record<string, unknown>>(),
+  methodologyHash: text("methodology_hash"),
   active: integer("active", { mode: "boolean" }).notNull().default(false),
 });
 
@@ -242,6 +327,11 @@ export const auditEvents = sqliteTable("audit_events", {
 export type GeoJSONPolygon = {
   type: "Polygon";
   coordinates: number[][][]; // [ [ [lng,lat], ... ] ]
+};
+
+export type GeoJSONMultiPolygon = {
+  type: "MultiPolygon";
+  coordinates: number[][][][];
 };
 
 export type Operation = typeof operations.$inferSelect;

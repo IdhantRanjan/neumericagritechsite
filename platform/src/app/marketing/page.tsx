@@ -1,6 +1,14 @@
 import { requireOperation } from "@/lib/current-op";
-import { getMarketingPositions, getPlanTargets } from "@/lib/data";
-import { derivePosition, runScenarios, targetHit, type Position } from "@/lib/marketing";
+import {
+  getMarketingPositions,
+  getPlanTargets,
+  getFields,
+  getSeasonsByField,
+  getSceneObservations,
+} from "@/lib/data";
+import { derivePosition, targetHit, type Position } from "@/lib/marketing";
+import { runMonteCarlo } from "@/lib/marketing-mc";
+import { estimateYield, type YieldEstimate } from "@/lib/satellite/yield";
 import { saveMarketingPosition, addPlanTarget, setTargetStatus } from "@/app/actions";
 import { Meta, PageHeader, Tag } from "@/components/ui";
 
@@ -34,7 +42,7 @@ export default async function MarketingPage() {
       </div>
 
       {position ? (
-        <PositionDashboard position={position} isDemo={op.isDemo} />
+        <PositionDashboard position={position} isDemo={op.isDemo} operationId={op.id} />
       ) : (
         <p className="text-ink-soft max-w-[620px] mb-8 text-[15px]">
           Start by entering your position below — rough numbers beat no numbers, and you can
@@ -47,10 +55,48 @@ export default async function MarketingPage() {
   );
 }
 
-async function PositionDashboard({ position, isDemo }: { position: Position; isDemo: boolean }) {
+/** Acre-weighted satellite yield estimate across the operation's fields of this crop. */
+async function satelliteYield(operationId: string, position: Position) {
+  const fields = await getFields(operationId);
+  const perField: Array<{ name: string; acres: number; est: YieldEstimate }> = [];
+  for (const f of fields) {
+    if (!f.boundary) continue;
+    const seasons = await getSeasonsByField(f.id);
+    if (!seasons.some((s) => s.crop === position.crop && s.year === position.year)) continue;
+    const obs = await getSceneObservations(f.id);
+    if (obs.length === 0) continue;
+    const est = estimateYield(obs, position.crop, position.year, position.expectedYieldBuPerAcre ?? 0);
+    perField.push({ name: f.name, acres: f.acres, est });
+  }
+  const usable = perField.filter((p) => p.est.ok && p.est.estimateBuAc != null);
+  if (usable.length === 0) return { perField, combined: null as null | { est: number; lo: number; hi: number; acres: number } };
+  const acres = usable.reduce((a, p) => a + p.acres, 0);
+  const w = (sel: (e: YieldEstimate) => number) => usable.reduce((a, p) => a + sel(p.est) * p.acres, 0) / acres;
+  return {
+    perField,
+    combined: {
+      est: Math.round(w((e) => e.estimateBuAc!) * 10) / 10,
+      lo: Math.round(w((e) => e.loBuAc!) * 10) / 10,
+      hi: Math.round(w((e) => e.hiBuAc!) * 10) / 10,
+      acres,
+    },
+  };
+}
+
+async function PositionDashboard({
+  position,
+  isDemo,
+  operationId,
+}: {
+  position: Position;
+  isDemo: boolean;
+  operationId: string;
+}) {
   const d = derivePosition(position);
-  const scenarios = runScenarios(position);
+  const mc = runMonteCarlo(position);
   const targets = await getPlanTargets(position.id);
+  const satYield =
+    position.expectedYieldBuPerAcre != null ? await satelliteYield(operationId, position) : null;
 
   return (
     <div className="space-y-10 mb-12">
@@ -151,79 +197,112 @@ async function PositionDashboard({ position, isDemo }: { position: Position; isD
         </ul>
       </section>
 
-      {/* Scenario sweep */}
-      {scenarios.length > 0 && (
-        <section>
-          <h2 className="text-xl mb-1">If you… then</h2>
-          <p className="text-[14px] text-ink-soft mb-4 max-w-[720px]">
-            Each row is a choice about your {bu(d.unpricedBu)} unpriced; each column assumes a
-            different cash price later. Cells show your effective average price across sold +
-            unpriced bushels, net of {price(position.storageCostPerBuMonth)} /bu/month storage
-            carry. <em>Green = above your {price(d.breakevenPerBu)} breakeven.</em> Assumes
-            basis holds — a simplification, not a forecast.
-          </p>
-          <div className="card overflow-x-auto">
-            <table className="w-full text-[14px] min-w-[680px]">
-              <thead>
-                <tr className="border-b border-ash">
-                  <th className="label text-left p-3">Choice</th>
-                  {scenarios[0].cells.map((c) => (
-                    <th key={c.priceShiftPct} className="label p-3 text-right">
-                      {c.priceShiftPct > 0 ? "+" : ""}{c.priceShiftPct}%
-                      <span className="block normal-case text-ink-soft">{price(c.horizonPrice)}</span>
-                    </th>
-                  ))}
-                  <th className="label p-3 text-right">Cash raised now</th>
-                </tr>
-              </thead>
-              <tbody>
-                {scenarios.map((row) => (
-                  <tr key={row.label} className="border-b border-ash last:border-0">
-                    <td className="p-3">
-                      <p className="font-medium">{row.label}</p>
-                      <p className="text-[12px] text-ink-soft">
-                        {bu(row.sellNowBu)} now · {bu(row.heldBu)} held
-                        {row.carryCost > 0 ? ` · ${usd(row.carryCost)} carry` : ""}
-                      </p>
-                    </td>
-                    {row.cells.map((c) => (
-                      <td key={c.priceShiftPct} className="p-3 text-right font-mono">
-                        <span
-                          className={
-                            c.vsBreakeven === "above"
-                              ? "text-forest-ink"
-                              : c.vsBreakeven === "below"
-                              ? "text-[var(--red)]"
-                              : ""
-                          }
-                        >
-                          {price(c.netAvgPricePerBu)}
-                        </span>
-                        <span className="block text-[11px] text-ink-soft">{usd(c.totalNetRevenue)}</span>
-                      </td>
-                    ))}
-                    <td className="p-3 text-right font-mono">
-                      {usd(row.cashRaisedNow)}
-                      {position.cashNeedUsd != null && (
-                        <span className="block text-[11px]">
-                          {row.coversCashNeed ? (
-                            <span className="text-forest-ink">covers {usd(position.cashNeedUsd)} need</span>
-                          ) : (
-                            <span className="text-[var(--amber)]">short of {usd(position.cashNeedUsd)} need</span>
-                          )}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
+      {/* Satellite yield estimate — Hard Core 3 */}
+      {satYield && (
+        <section className="card p-5 max-w-[860px]">
+          <p className="label mb-1">Satellite yield estimate · relative-to-your-own-history method</p>
+          {satYield.combined ? (
+            <>
+              <p className="text-[1.4rem] font-serif">
+                {satYield.combined.est} bu/ac
+                <span className="text-ink-soft text-[1rem]"> ({satYield.combined.lo}–{satYield.combined.hi})</span>
+              </p>
+              <p className="text-[13.5px] text-ink-soft mt-1 max-w-[680px]">
+                Acre-weighted over {Math.round(satYield.combined.acres)} scanned acres: this
+                season&rsquo;s NDVI integral vs the same fields&rsquo; prior seasons, scaled by
+                your own {position.expectedYieldBuPerAcre} bu/ac reference. An estimate with a
+                band, not a measurement — the band narrows as clear passes accumulate.
+              </p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {satYield.perField.map((p) => (
+                  <span key={p.name} className="tag tag--ash">
+                    {p.name}: {p.est.ok ? `${p.est.estimateBuAc} (±${Math.round((((p.est.hiBuAc ?? 0) - (p.est.loBuAc ?? 0)) / 2) * 10) / 10})` : "insufficient data"}
+                  </span>
                 ))}
-              </tbody>
-            </table>
-          </div>
-          {isDemo && (
-            <p className="mt-3"><Tag tone="demo">Sample position — fictional numbers</Tag></p>
+              </div>
+            </>
+          ) : (
+            <p className="text-[14px] text-ink-soft max-w-[680px]">
+              No field has enough satellite history yet ({satYield.perField.length} candidate
+              field{satYield.perField.length === 1 ? "" : "s"}).{" "}
+              {satYield.perField[0]?.est.reason ??
+                "Open a field and run satellite scans (this season + at least 2 prior seasons)."}
+            </p>
           )}
         </section>
       )}
+
+      {/* Outcome distributions — Monte Carlo, non-directive by construction */}
+      <section>
+        <h2 className="text-xl mb-1">If you… the range of what happens</h2>
+        {!mc.ok ? (
+          <p className="text-[14px] text-ink-soft max-w-[680px]">{mc.reason}</p>
+        ) : (
+          <>
+            <p className="text-[14px] text-ink-soft mb-4 max-w-[760px]">
+              {mc.params.paths.toLocaleString()} simulated price worlds per row — futures follow
+              a <strong>zero-drift</strong> random walk ({Math.round(mc.params.annualVol * 100)}%
+              annualized volatility; the engine takes no view on direction), local basis
+              mean-reverts to your own stated range (mid {mc.params.basisMean >= 0 ? "+" : ""}
+              {mc.params.basisMean.toFixed(2)}, σ {mc.params.basisSigma.toFixed(2)}). Every row
+              sees the <em>same</em> worlds, so differences are your schedule, not luck. P10 =
+              a bad decile, P90 = a good one. No row is a recommendation.
+            </p>
+            <div className="card overflow-x-auto">
+              <table className="w-full text-[14px] min-w-[760px]">
+                <thead>
+                  <tr className="border-b border-ash">
+                    <th className="label text-left p-3">Schedule for {bu(d.unpricedBu)} unpriced</th>
+                    <th className="label p-3 text-right">P10 (rough year)</th>
+                    <th className="label p-3 text-right">P50 (median)</th>
+                    <th className="label p-3 text-right">P90 (kind year)</th>
+                    <th className="label p-3 text-right">P10 with floor</th>
+                    <th className="label p-3 text-right">Odds below breakeven</th>
+                    <th className="label p-3 text-right">Odds cash need met</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mc.strategies.map((s) => (
+                    <tr key={s.label} className="border-b border-ash last:border-0">
+                      <td className="p-3">
+                        <p className="font-medium">{s.label}</p>
+                        <p className="text-[12px] text-ink-soft">
+                          median avg price {price(s.avgPriceP50)}
+                          {s.carryCostP50 > 0 ? ` · ${usd(s.carryCostP50)} carry` : ""}
+                        </p>
+                      </td>
+                      <td className="p-3 text-right font-mono text-[var(--red)]">{usd(s.p10)}</td>
+                      <td className="p-3 text-right font-mono">{usd(s.p50)}</td>
+                      <td className="p-3 text-right font-mono text-forest-ink">{usd(s.p90)}</td>
+                      <td className="p-3 text-right font-mono">
+                        {usd(s.floorP10)}
+                        {s.floorP10 > s.p10 && (
+                          <span className="block text-[11px] text-forest-ink">
+                            floor adds {usd(s.floorP10 - s.p10)}
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-3 text-right font-mono">
+                        {s.probBelowBreakeven != null ? `${Math.round(s.probBelowBreakeven * 100)}%` : "—"}
+                      </td>
+                      <td className="p-3 text-right font-mono">
+                        {s.probCashNeedMet != null ? `${Math.round(s.probCashNeedMet * 100)}%` : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-[12.5px] text-ink-soft mt-3 max-w-[760px]">
+              {mc.floorNote} Reproducible: seed {mc.params.seed} derives from your own numbers —
+              same inputs, same distributions, anywhere.
+            </p>
+            {isDemo && (
+              <p className="mt-2"><Tag tone="demo">Sample position — fictional numbers</Tag></p>
+            )}
+          </>
+        )}
+      </section>
     </div>
   );
 }

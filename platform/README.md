@@ -22,6 +22,12 @@ demo operation. Visit `/setup` to create a real farm workspace, or
 |---|---|
 | Data model (all pillars) | `src/db/schema.ts` — the canonical entity design |
 | DB bootstrap (dual driver) | `src/db/index.ts` — Turso in prod, SQLite in dev |
+| **Satellite CV engine** | `src/lib/satellite/` — real Sentinel-2 STAC/COG pipeline, SCL cloud masking, change-detection damage quantification (see `../docs/ENGINES.md` §1; proof artifact in `../docs/examples/`) |
+| **ML flywheel** | `ground_truth_labels` + `src/lib/training-export.ts` + `src/lib/cv/registry.ts` (pluggable models; demo stub barred from real ops) |
+| **Yield estimator** | `src/lib/satellite/yield.ts` — relative-to-self NDVI integral with honest bands |
+| **Monte Carlo marketing engine** | `src/lib/marketing-mc.ts` — zero-drift GBM + OU basis + floor-as-option, seeded/deterministic, non-directive |
+| **Parametric trigger engine** | `src/lib/parametric.ts` — locked methodology hash, deterministic evaluation, weather-index basis-risk comparison |
+| **Provenance chain + storage** | `src/lib/provenance.ts` (hash-chained, HMAC-signed) + `src/lib/storage.ts` (content-addressed Vercel Blob) |
 | Workspace access / tenancy | `src/lib/current-op.ts` — private-link cookie scoping |
 | CV pipeline contract + demo analyzer | `src/lib/cv/` |
 | Deadline rules (IL 2026, data-driven) | `src/data/rules/deadlines.il.2026.json` + `src/lib/rules/deadlines.ts` |
@@ -53,10 +59,12 @@ See [`../docs/DEPLOY.md`](../docs/DEPLOY.md). Production needs
 
 - Workspace access is via unguessable private link (bearer token in an HttpOnly
   cookie), not full auth. Magic-link email auth is the Phase 1 replacement.
-- `demo-analyzer` stands in for the real NDVI/ExG analyzers; its output is
-  always labeled sample analysis and must never be shown as real.
-- Uploaded photos skip EXIF/GPS validation and are stored in `/tmp` on
-  serverless (ephemeral) — the SHA-256 + metadata persist in the DB, but the
-  image bytes need durable object storage before claim evidence relies on them.
+- The satellite change-detection engine is the primary analyzer for real
+  operations; `demo-analyzer` exists only for demo workspaces and is barred
+  from real ops in the model registry, not just the UI.
+- Uploaded photos skip EXIF/GPS validation (guided capture flow is Phase 1);
+  bytes are stored content-addressed in durable Blob storage.
 - Marketing prices are farmer-entered until licensed market-data feeds land.
 - Evidence packet is browser-print → PDF.
+- Engine-by-engine limitations and the labeled-data / carrier / legal-review
+  gates are documented in `../docs/ENGINES.md`.

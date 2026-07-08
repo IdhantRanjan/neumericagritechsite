@@ -7,11 +7,14 @@ import {
   getFcr,
   getCapturesByField,
   getPolicyRef,
+  getLabelsForClaim,
+  getLatestAuditFor,
 } from "@/lib/data";
-import { addEvidence, markFcrReviewed } from "@/app/actions";
+import { addEvidence, markFcrReviewed, analyzeClaimSatellite, recordOutcome } from "@/app/actions";
 import { FieldShape, Meta, PageHeader, Tag } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 300; // satellite analysis fetches real scenes
 
 const fmt = (iso: string) =>
   new Date(iso.length === 10 ? iso + "T12:00:00" : iso).toLocaleString("en-US", {
@@ -31,6 +34,9 @@ export default async function ClaimDetail({ params }: { params: Promise<{ id: st
   const captures = await getCapturesByField(claim.fieldId);
   const fcrs = (await Promise.all(claim.fcrIds.map((f) => getFcr(f)))).filter(Boolean);
   const latest = fcrs.at(-1);
+  const labels = await getLabelsForClaim(claim.id);
+  const unavailable = await getLatestAuditFor("claim", claim.id, "satellite_analysis_unavailable");
+  const unavailableReason = (unavailable?.detail as { reason?: string } | undefined)?.reason;
 
   return (
     <>
@@ -88,17 +94,76 @@ export default async function ClaimDetail({ params }: { params: Promise<{ id: st
             )}
           </ul>
 
+          {!op.isDemo && (
+            <form action={analyzeClaimSatellite.bind(null, claim.id)} className="card p-5 no-print border-l-4 border-l-forest mb-5">
+              <p className="label mb-1">Satellite analysis — primary evidence path</p>
+              <p className="text-[13.5px] text-ink-soft mb-3 max-w-[380px]">
+                Runs Sentinel-2 change detection around {claim.eventDate}: the field vs its own
+                multi-year baseline vs the surrounding region. Takes a minute — it fetches real
+                scenes.
+              </p>
+              {unavailableReason && !latest && (
+                <p className="text-[13.5px] mb-3 text-[var(--amber)]">
+                  Last attempt: {unavailableReason}
+                </p>
+              )}
+              <button type="submit" className="pill pill--solid pill--sm">
+                Analyze with satellite
+              </button>
+            </form>
+          )}
+
           <form action={addEvidence.bind(null, claim.id)} className="card p-5 space-y-4 no-print">
-            <p className="label">Add evidence & run analysis</p>
+            <p className="label">Add photo evidence{op.isDemo ? " & run demo analysis" : ""}</p>
             <input type="file" name="photo" accept="image/*" className="text-[14px]" />
             <div className="flex items-center justify-between gap-3">
               <p className="text-[13px] text-ink-soft max-w-[300px]">
-                No photo handy? Submit empty to ingest a labeled sample capture and see the
-                pipeline run.
+                {op.isDemo
+                  ? "No photo handy? Submit empty to ingest a labeled sample capture and see the pipeline run."
+                  : "Photos are hashed and stored content-addressed; geotag enforcement lands with the guided capture flow."}
               </p>
-              <button type="submit" className="pill">Analyze</button>
+              <button type="submit" className="pill">{op.isDemo ? "Analyze" : "Attach photo"}</button>
             </div>
           </form>
+
+          <div className="card p-5 mt-5 no-print">
+            <p className="label mb-1">Actual outcome (ground truth)</p>
+            <p className="text-[13px] text-ink-soft mb-3 max-w-[380px]">
+              When the real number is known — adjuster settlement, your own assessment, or
+              harvested yield — record it. Every label sharpens the models that back the next
+              farmer&rsquo;s claim.
+            </p>
+            {labels.map((l) => (
+              <p key={l.id} className="text-[13.5px] mb-1">
+                <Tag tone="strong">recorded</Tag>{" "}
+                <span className="capitalize">{l.labelType.replaceAll("_", " ")}</span>: {l.value}{" "}
+                {l.unit === "pct" ? "%" : l.unit.replaceAll("_", " ")} ({l.source})
+              </p>
+            ))}
+            <form action={recordOutcome.bind(null, claim.id)} className="grid grid-cols-2 gap-3 items-end mt-2">
+              <div>
+                <label className="label block mb-1">What</label>
+                <select name="labelType" defaultValue="adjuster_settlement_pct">
+                  <option value="adjuster_settlement_pct">Adjuster settlement (% loss)</option>
+                  <option value="farmer_damage_pct">My own damage estimate (%)</option>
+                  <option value="harvested_yield_bu_ac">Harvested yield (bu/ac)</option>
+                </select>
+              </div>
+              <div>
+                <label className="label block mb-1">Value</label>
+                <input name="value" type="number" step="any" min="0" required />
+              </div>
+              <div>
+                <label className="label block mb-1">Source</label>
+                <select name="source" defaultValue="adjuster">
+                  <option value="adjuster">Adjuster</option>
+                  <option value="farmer">Me</option>
+                  <option value="scale_ticket">Scale tickets</option>
+                </select>
+              </div>
+              <button type="submit" className="pill pill--sm">Record</button>
+            </form>
+          </div>
         </section>
 
         <section>
@@ -125,6 +190,9 @@ export default async function ClaimDetail({ params }: { params: Promise<{ id: st
                 <Meta k="Confidence" v={`${Math.round(latest.confidence * 100)}%`} />
                 <Meta k="Growth stage" v={latest.growthStage ?? "—"} />
               </div>
+              {latest.narrative && (
+                <p className="text-[14px] text-ink-soft border-t border-ash pt-4 mb-4">{latest.narrative}</p>
+              )}
               <div className="border-t border-ash pt-4">
                 <p className="label mb-2">Metrics</p>
                 <div className="flex flex-wrap gap-2">
@@ -152,7 +220,14 @@ export default async function ClaimDetail({ params }: { params: Promise<{ id: st
             </div>
           )}
           <div className="mt-5">
-            <FieldShape boundary={field.boundary} className="w-40" />
+            <FieldShape
+              boundary={field.boundary}
+              overlay={(latest?.affectedArea as never) ?? null}
+              className="w-40"
+            />
+            {latest?.affectedArea && (
+              <p className="label mt-1">Red = affected area from change detection</p>
+            )}
           </div>
         </section>
       </div>

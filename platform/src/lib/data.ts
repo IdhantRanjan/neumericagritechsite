@@ -112,3 +112,39 @@ export async function getPlanTargets(positionId: string) {
     .where(eq(t.marketingPlanTargets.positionId, positionId))
     .orderBy(asc(t.marketingPlanTargets.createdAt));
 }
+
+export async function getSceneObservations(fieldId: string) {
+  const db = await getDb();
+  return db
+    .select()
+    .from(t.sceneObservations)
+    .where(eq(t.sceneObservations.fieldId, fieldId))
+    .orderBy(asc(t.sceneObservations.acquiredAt));
+}
+
+export async function getTriggerEvaluations(fieldId: string) {
+  const db = await getDb();
+  const defs = await db
+    .select()
+    .from(t.triggerDefinitions)
+    .where(eq(t.triggerDefinitions.fieldId, fieldId));
+  if (defs.length === 0) return [];
+  const evals = await db
+    .select()
+    .from(t.triggerEvaluations)
+    .where(inArray(t.triggerEvaluations.triggerDefinitionId, defs.map((d) => d.id)));
+  return evals.sort((a, b) => (a.evaluatedAt > b.evaluatedAt ? -1 : 1));
+}
+
+export async function getLabelsForClaim(claimId: string) {
+  const db = await getDb();
+  return db.select().from(t.groundTruthLabels).where(eq(t.groundTruthLabels.claimId, claimId));
+}
+
+export async function getLatestAuditFor(entityType: string, entityId: string, action: string) {
+  const db = await getDb();
+  const rows = await db.select().from(t.auditEvents).where(eq(t.auditEvents.entityType, entityType));
+  return rows
+    .filter((r) => r.action === action && (r.detail as { reason?: string } | null) && r.entityId === entityId)
+    .sort((a, b) => (a.at > b.at ? -1 : 1))[0];
+}

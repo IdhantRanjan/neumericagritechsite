@@ -73,12 +73,18 @@ export function DemoTag() {
   return <Tag tone="demo">Sample</Tag>;
 }
 
-/** Flat forest line-art rendering of a field boundary (GeoJSON → SVG). */
+/**
+ * Flat forest line-art rendering of a field boundary (GeoJSON → SVG),
+ * optionally overlaying an affected-area MultiPolygon (from the damage
+ * engine) in red.
+ */
 export function FieldShape({
   boundary,
+  overlay,
   className = "",
 }: {
   boundary: GeoJSONPolygon | null;
+  overlay?: { type: "MultiPolygon"; coordinates: number[][][][] } | null;
   className?: string;
 }) {
   if (!boundary) {
@@ -91,13 +97,9 @@ export function FieldShape({
   const minY = Math.min(...ys), maxY = Math.max(...ys);
   const w = maxX - minX || 1, h = maxY - minY || 1;
   const pad = 8, size = 100;
-  const pts = ring
-    .map((p) => {
-      const x = pad + ((p[0] - minX) / w) * (size - 2 * pad);
-      const y = pad + ((maxY - p[1]) / h) * (size - 2 * pad); // flip lat axis
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(" ");
+  const px = (p: number[]) =>
+    `${(pad + ((p[0] - minX) / w) * (size - 2 * pad)).toFixed(1)},${(pad + ((maxY - p[1]) / h) * (size - 2 * pad)).toFixed(1)}`;
+  const pts = ring.map(px).join(" ");
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden>
       <polygon
@@ -107,6 +109,9 @@ export function FieldShape({
         strokeWidth="1.5"
         strokeLinejoin="round"
       />
+      {overlay?.coordinates.map((poly, i) => (
+        <polygon key={i} points={poly[0].map(px).join(" ")} fill="var(--red-tint)" stroke="var(--red)" strokeWidth="0.5" />
+      ))}
     </svg>
   );
 }
