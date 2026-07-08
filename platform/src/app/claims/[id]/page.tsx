@@ -11,7 +11,9 @@ import {
   getLabelsForClaim,
   getLatestAuditFor,
   getRoutingForClaim,
+  getCaptureSession,
 } from "@/lib/data";
+import { CaptureSession } from "@/components/capture-session";
 import { addEvidence, markFcrReviewed, analyzeClaimSatellite, recordOutcome, ingestDroneOrtho } from "@/app/actions";
 import { FieldShape, Meta, PageHeader, Tag } from "@/components/ui";
 
@@ -42,6 +44,7 @@ export default async function ClaimDetail({ params }: { params: Promise<{ id: st
   const unavailable = await getLatestAuditFor("claim", claim.id, "satellite_analysis_unavailable");
   const unavailableReason = (unavailable?.detail as { reason?: string } | undefined)?.reason;
   const routing = await getRoutingForClaim(claim.id);
+  const captureSession = await getCaptureSession(claim.id);
 
   return (
     <>
@@ -133,6 +136,12 @@ export default async function ClaimDetail({ params }: { params: Promise<{ id: st
                 Analyze with satellite
               </button>
             </form>
+          )}
+
+          {!op.isDemo && writable && (
+            <div className="mb-5">
+              <CaptureSession claimId={claim.id} session={captureSession ?? null} />
+            </div>
           )}
 
           {!op.isDemo && writable && (

@@ -57,6 +57,13 @@
       "when": 1783533880336,
       "tag": "0007_fcr_fusion",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1783534029872,
+      "tag": "0008_capture_sessions",
+      "breakpoints": true
     }
   ]
 }

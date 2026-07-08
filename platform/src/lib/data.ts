@@ -157,3 +157,10 @@ export async function getLatestAuditFor(entityType: string, entityId: string, ac
     .filter((r) => r.action === action && (r.detail as { reason?: string } | null) && r.entityId === entityId)
     .sort((a, b) => (a.at > b.at ? -1 : 1))[0];
 }
+
+export async function getCaptureSession(claimId: string) {
+  const db = await getDb();
+  return (
+    await db.select().from(t.captureSessions).where(eq(t.captureSessions.claimId, claimId))
+  )[0];
+}

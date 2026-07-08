@@ -1000,6 +1000,21 @@ export async function recordOutcome(claimId: string, formData: FormData) {
     labelType,
     value,
   });
+
+  // Attaching an objective outcome (settlement/yield) makes any capture
+  // session on this claim calibration-grade — the loop is closed.
+  if (labelType === "adjuster_settlement_pct" || labelType === "harvested_yield_bu_ac") {
+    const session = (
+      await db.select().from(t.captureSessions).where(eq(t.captureSessions.claimId, claimId))
+    )[0];
+    if (session && !session.calibrationGrade) {
+      await db
+        .update(t.captureSessions)
+        .set({ calibrationGrade: true, status: "calibration_grade", updatedAt: now() })
+        .where(eq(t.captureSessions.id, session.id));
+      await audit(op.id, "capture_session_calibration_grade", "capture_session", session.id, { claimId, labelType });
+    }
+  }
   revalidatePath(`/claims/${claimId}`);
 }
 
@@ -1076,4 +1091,106 @@ export async function evaluateTriggerAction(fieldId: string, formData: FormData)
     gap: gap.gap,
   });
   revalidatePath(`/fields/${fieldId}`);
+}
+
+// ————— B1: capture sessions (field ground-truth collection) —————
+
+/**
+ * Create/update a capture session for a claim: protocol metadata + per-zone
+ * human damage estimates, frozen at capture. Designed for a founder on a
+ * phone/tablet in the field. The drone ortho and objective outcomes attach
+ * to the same session (below), building a calibration-grade labeled example
+ * for the Track B flywheel (docs/CAPTURE-PROTOCOL.md).
+ */
+export async function saveCaptureSession(claimId: string, formData: FormData) {
+  const { op } = await requireWrite();
+  const db = await getDb();
+  const claim = (
+    await db.select().from(t.claims).where(and(eq(t.claims.id, claimId), eq(t.claims.operationId, op.id)))
+  )[0];
+  if (!claim) throw new Error("Unknown claim");
+
+  const zones: Array<{ zone: string; lossPct: number; acres: number; note?: string }> = [];
+  const zoneNames = formData.getAll("zoneName").map(String);
+  const zoneLoss = formData.getAll("zoneLoss").map(Number);
+  const zoneAcres = formData.getAll("zoneAcres").map(Number);
+  for (let i = 0; i < zoneNames.length; i++) {
+    if (!zoneNames[i].trim() || !Number.isFinite(zoneLoss[i])) continue;
+    zones.push({
+      zone: zoneNames[i].trim().slice(0, 60),
+      lossPct: Math.max(0, Math.min(100, zoneLoss[i])),
+      acres: Number.isFinite(zoneAcres[i]) ? Math.max(0, zoneAcres[i]) : 0,
+    });
+  }
+
+  const existing = (
+    await db
+      .select()
+      .from(t.captureSessions)
+      .where(and(eq(t.captureSessions.claimId, claimId), eq(t.captureSessions.operationId, op.id)))
+  )[0];
+
+  const num = (k: string) => {
+    const v = Number(formData.get(k));
+    return Number.isFinite(v) && v > 0 ? v : null;
+  };
+  const values = {
+    operationId: op.id,
+    fieldId: claim.fieldId,
+    claimId,
+    damageType: claim.damageType,
+    daysSinceEvent: num("daysSinceEvent"),
+    growthStage: String(formData.get("growthStage") ?? "").slice(0, 40) || null,
+    gsdCm: num("gsdCm"),
+    altitudeM: num("altitudeM"),
+    bands: String(formData.get("bands") ?? "rgb"),
+    groundControl: String(formData.get("groundControl") ?? "camera_gps"),
+    conditions: String(formData.get("conditions") ?? "").slice(0, 300) || null,
+    zoneEstimates: zones.length ? zones : existing?.zoneEstimates ?? null,
+    status: zones.length ? "ground_truth" : existing?.status ?? "draft",
+    updatedAt: now(),
+  };
+
+  let sessionId: string;
+  if (existing) {
+    sessionId = existing.id;
+    await db.update(t.captureSessions).set(values).where(eq(t.captureSessions.id, existing.id));
+  } else {
+    sessionId = id("cap_sess");
+    await db.insert(t.captureSessions).values({ id: sessionId, createdAt: now(), calibrationGrade: false, ...values });
+  }
+  await audit(op.id, "capture_session_saved", "capture_session", sessionId, {
+    claimId,
+    zones: zones.length,
+  });
+  revalidatePath(`/claims/${claimId}`);
+}
+
+/** Recompute a session's calibration-grade flag when outcomes are attached. */
+export async function refreshCaptureCalibration(claimId: string) {
+  const { op } = await requireWrite();
+  const db = await getDb();
+  const session = (
+    await db
+      .select()
+      .from(t.captureSessions)
+      .where(and(eq(t.captureSessions.claimId, claimId), eq(t.captureSessions.operationId, op.id)))
+  )[0];
+  if (!session) return;
+  const labels = await db.select().from(t.groundTruthLabels).where(eq(t.groundTruthLabels.claimId, claimId));
+  const hasObjective = labels.some(
+    (l) => l.labelType === "adjuster_settlement_pct" || l.labelType === "harvested_yield_bu_ac"
+  );
+  const hasOrtho = Boolean(session.droneCaptureId) ||
+    (await db.select().from(t.imageryCaptures).where(eq(t.imageryCaptures.fieldId, session.fieldId)))
+      .some((c) => c.source === "drone");
+  await db
+    .update(t.captureSessions)
+    .set({
+      calibrationGrade: hasObjective,
+      status: hasObjective ? "calibration_grade" : hasOrtho ? "ortho" : session.status,
+      updatedAt: now(),
+    })
+    .where(eq(t.captureSessions.id, session.id));
+  revalidatePath(`/claims/${claimId}`);
 }

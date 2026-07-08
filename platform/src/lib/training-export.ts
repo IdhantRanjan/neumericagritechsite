@@ -34,6 +34,11 @@ export interface TrainingRow {
   sensorTiers: string[]; // which sensor tiers contributed features to this row
   features: Record<string, number>;
   featureCompleteness: number; // fraction of expected feature slots populated
+  // B1 capture-session provenance: is this a calibration-grade example
+  // (objective outcome attached) or a lower-weight human-estimate example?
+  captureGrade: "calibration_grade" | "human_estimate" | "none";
+  zoneEstimates: Array<{ zone: string; lossPct: number; acres: number }> | null;
+  flight: { gsdCm: number | null; bands: string | null; groundControl: string | null } | null;
 }
 
 /** Model name → tier prefix for feature namespacing. */
@@ -93,6 +98,13 @@ export async function exportTrainingRows(db: DB): Promise<TrainingRow[]> {
       features.ndvi_season_obs_n = vals.length;
     }
 
+    // B1 capture session for this claim (flight metadata + frozen zone estimates)
+    const session = label.claimId
+      ? (await db.select().from(t.captureSessions).where(eq(t.captureSessions.claimId, label.claimId)))[0]
+      : undefined;
+    const isObjective =
+      label.labelType === "adjuster_settlement_pct" || label.labelType === "harvested_yield_bu_ac";
+
     rows.push({
       labelId: label.id,
       labelType: label.labelType,
@@ -111,6 +123,11 @@ export async function exportTrainingRows(db: DB): Promise<TrainingRow[]> {
       features,
       // completeness relative to a satellite+season baseline of ~12 slots
       featureCompleteness: Math.min(1, Math.round((Object.keys(features).length / 12) * 100) / 100),
+      captureGrade: isObjective ? "calibration_grade" : session ? "human_estimate" : "none",
+      zoneEstimates: session?.zoneEstimates?.map((z) => ({ zone: z.zone, lossPct: z.lossPct, acres: z.acres })) ?? null,
+      flight: session
+        ? { gsdCm: session.gsdCm ?? null, bands: session.bands ?? null, groundControl: session.groundControl ?? null }
+        : null,
     });
   }
   return rows;

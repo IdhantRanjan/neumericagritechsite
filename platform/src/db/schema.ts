@@ -217,6 +217,42 @@ export const claims = sqliteTable("claims", {
 });
 
 /**
+ * Capture sessions (docs/CAPTURE-PROTOCOL.md) — the field-collection record
+ * that turns a drone flight + human ground truth into a calibration-grade
+ * labeled example for the Track B flywheel. Bundles protocol metadata, the
+ * drone orthomosaic capture, per-zone human damage estimates (frozen at
+ * capture), and — attached later — the objective outcomes (adjuster
+ * settlement, harvested yield) that make it calibration-grade.
+ */
+export const captureSessions = sqliteTable("capture_sessions", {
+  id: text("id").primaryKey(),
+  operationId: text("operation_id").notNull().references(() => operations.id),
+  fieldId: text("field_id").notNull().references(() => fields.id),
+  claimId: text("claim_id").references(() => claims.id),
+  protocolVersion: text("protocol_version").notNull().default("capture-protocol@1.0"),
+  damageType: text("damage_type"),
+  daysSinceEvent: integer("days_since_event"),
+  growthStage: text("growth_stage"),
+  // flight parameters (docs/CAPTURE-PROTOCOL.md §2)
+  gsdCm: real("gsd_cm"),
+  altitudeM: real("altitude_m"),
+  bands: text("bands"), // rgb | rgb_nir
+  groundControl: text("ground_control"), // rtk | gcp | camera_gps
+  conditions: text("conditions"), // light/wind notes
+  // per-zone human damage estimates, frozen at capture (§3) — NOT ground truth,
+  // labeled as human estimate until an objective outcome is attached (§4)
+  zoneEstimates: text("zone_estimates", { mode: "json" })
+    .$type<Array<{ zone: string; lossPct: number; acres: number; note?: string }>>(),
+  droneCaptureId: text("drone_capture_id").references(() => imageryCaptures.id),
+  groundPhotoIds: text("ground_photo_ids", { mode: "json" }).$type<string[]>().notNull().default([]),
+  // calibration-grade only once an objective outcome (settlement/yield) exists
+  calibrationGrade: integer("calibration_grade", { mode: "boolean" }).notNull().default(false),
+  status: text("status").notNull().default("draft"), // draft|ortho|ground_truth|calibration_grade
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+/**
  * Sensor-routing decisions — the auditable record of WHICH sensor tier the
  * platform selected for a given question and WHY. Deterministic rule output
  * (src/lib/sensors/routing.ts), stored so an insurer can see the routing
