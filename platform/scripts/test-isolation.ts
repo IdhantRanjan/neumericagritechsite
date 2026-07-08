@@ -21,7 +21,7 @@ import fs from "node:fs";
 import { randomUUID } from "node:crypto";
 
 async function main() {
-  fs.rmSync(".data/isolation-test.db", { force: true });
+  if (!process.env.KEEP_DB) fs.rmSync(".data/isolation-test.db", { force: true });
   const { getDb, tables: t } = await import("../src/db");
   const { getField, getClaim } = await import("../src/lib/data");
   const { canWrite, canManage, canRecordOutcome } = await import("../src/lib/current-op");
@@ -73,7 +73,7 @@ async function main() {
 
   console.log("\n2) membership gating (session → operation resolution)");
   const usrB = `usr_${randomUUID().slice(0, 8)}`;
-  await db.insert(t.users).values({ id: usrB, email: "b@example.com", name: null, passwordHash: null, emailVerifiedAt: now, createdAt: now });
+  await db.insert(t.users).values({ id: usrB, email: `b-${usrB}@example.com`, name: null, passwordHash: null, emailVerifiedAt: now, createdAt: now });
   await db.insert(t.memberships).values({ id: `mem_${randomUUID().slice(0, 8)}`, userId: usrB, operationId: B.opId, role: "owner", invitedBy: null, createdAt: now });
   const membershipsOfB = await db.select().from(t.memberships).where(eq(t.memberships.userId, usrB));
   check("user B has exactly their own membership", membershipsOfB.length === 1 && membershipsOfB[0].operationId === B.opId);
