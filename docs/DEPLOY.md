@@ -18,6 +18,14 @@
 DNS-only lets Vercel terminate TLS and auto-issue the Let's Encrypt cert (the zone's CAA records already allow `letsencrypt.org`). If you prefer to keep Cloudflare proxying (orange cloud), set the zone SSL mode to **Full (strict)** and expect a few minutes for both certs to settle. Do **not** switch the domain's nameservers to Vercel — that would move the live landing site's DNS too. After the record exists: `curl -I https://dashboard.neumeric.xyz/api/health` should return 200 with `{"ok":true}`.
 - **Database** — Turso (hosted libsql). Same schema/migrations as local dev; migrations run automatically at cold start.
 
+### Clean URLs (landing)
+
+`vercel.json` sets `cleanUrls: true` — pages serve extensionless (`/product`,
+`/manifesto`, `/contact`) and every old `.html` URL permanently redirects to
+its clean path (Vercel emits 308 Permanent Redirect; equivalent permanence to
+301 and treated identically by search engines — existing shared links keep
+working). Canonical + OpenGraph/Twitter meta are set per page.
+
 ## Environment variables (platform project on Vercel)
 
 | Var | Required | Value |
