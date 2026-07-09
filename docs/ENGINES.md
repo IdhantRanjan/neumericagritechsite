@@ -261,21 +261,35 @@ drone tier, is the path past the satellite ceiling. Reproduce:
 pockets) has no authoritative field-level label at any scale; that blindness
 is the drone tier's mandate (§0), not something this test could score.
 
-**Method levers — tried vs. characterized-next (honest).** The lever that was
-*run* here is **weather-corroboration** (pre-registered in the design), and it
-was decisive: it converted a specificity-0.58 raw gate into a 0/31-false-
-positive screen. The remaining levers from the build brief — s2cloudless
-(beyond SCL), multi-index corroboration (NDRE+EVI), SSURGO soil priors,
-per-pixel CDL masking, Landsat/HLS baseline extension — are **not run this
-cycle** because each requires a methodology change (PARAMS_HASH bump +
-re-validation) and, more importantly, none plausibly overturns the *cause* of
-the near-null: 10 m pixels and single-index own-history baselines cannot
-separate a stressed 25-acre corn patch from normal patch-scale variance, and
-county labels are too weak to grade patches. The productive path past the
-ceiling is not a better satellite index — it is (1) the drone tier for
-resolution and (2) real field-level labels for calibration, both already
-built and waiting on real captures. Adopting any lever remains gated on it
-moving honestly-measured, leak-free error, per the brief.
+**Method levers — measured (characterization only, engine unchanged).**
+The lever *run inside* the pre-registered design was **weather-corroboration**,
+and it was decisive (specificity 0.58 → 1.00). Three further levers were
+subsequently **characterized side-by-side on the same frozen 37-unit
+evaluation** (`scripts/ml/characterize-levers.ts`, results in
+`scripts/ml/out/lever-characterization.json`) — none was adopted into the
+engine, which would require a methodology version bump + validation on an
+*independent* event set (adopting them on this test would be tuning to it):
+
+- **Harmonic temporal baseline (promising):** replacing the DOY-kernel
+  expectation with an annual+semiannual harmonic fit over the baseline years
+  cut control z-gate crossings from **11/29 to 6/29 at unchanged stress
+  crossings (3/6)** — roughly halving the false-fire component the backtest
+  exposed. Candidate for methodology v1.1, gated on independent re-validation.
+- **SSURGO soil prior (honest negative):** the fired control patches sit on
+  *better* soil (mean nonirrigated capability class 1.69) than the quiet ones
+  (2.28) — the "chronically poor soil misread as damage" hypothesis is **not
+  supported** in this sample; a soil mask would not have prevented these false
+  fires. (NCCPI is not exposed via Soil Data Access; capability class was the
+  available proxy, stated.)
+- **HLS harmonized Landsat+Sentinel (availability characterized):** 24
+  combined scenes vs ~9 Sentinel-only over a test patch in a 6-week window —
+  ~2.7× revisit density, which attacks the cloud/revisit blindness (not the
+  10 m resolution ceiling). Data download is gated on a free NASA Earthdata
+  token — flagged, not worked around.
+
+The structural conclusion stands: the path past the patch-scale ceiling is
+(1) the drone tier for resolution and (2) real field-level labels for
+calibration — both built and waiting on real captures.
 
 ### 3d. CDL crop verification (`satellite/cdl.ts`)
 

@@ -1,0 +1,784 @@
+{
+ "ranAt": "2026-07-09T00:02:55.128Z",
+ "frozenEvaluation": "same 37 units, strata, event dates, post-scene rule, z≤−1.5 gate form as backtest v2 — characterization only, engine unchanged",
+ "lever1_harmonicBaseline": {
+  "method": "annual+semiannual harmonic least squares over 3 baseline years' clear obs (σ floored 0.05), z of same worst post scene",
+  "production": {
+   "stressCross": "3/6",
+   "controlCross": "11/29"
+  },
+  "harmonic": {
+   "stressCross": "3/6",
+   "controlCross": "6/29"
+  },
+  "perUnit": [
+   {
+    "fips": "007",
+    "county": "BOONE",
+    "year": 2019,
+    "stratum": "control",
+    "prodZ": -0.8524,
+    "harmonicZ": -0.094,
+    "prodGate": false,
+    "harmonicGate": false,
+    "baselineN": 12,
+    "sigma": 0.106
+   },
+   {
+    "fips": "007",
+    "county": "BOONE",
+    "year": 2020,
+    "stratum": "control",
+    "prodZ": -0.2413,
+    "harmonicZ": -0.234,
+    "prodGate": false,
+    "harmonicGate": false,
+    "baselineN": 22,
+    "sigma": 0.184
+   },
+   {
+    "fips": "007",
+    "county": "BOONE",
+    "year": 2021,
+    "stratum": "stress_strong",
+    "prodZ": -0.2674,
+    "harmonicZ": -0.314,
+    "prodGate": false,
+    "harmonicGate": false,
+    "baselineN": 19,
+    "sigma": 0.086
+   },
+   {
+    "fips": "007",
+    "county": "BOONE",
+    "year": 2022,
+    "stratum": "control",
+    "prodZ": 1.302,
+    "harmonicZ": 1.339,
+    "prodGate": false,
+    "harmonicGate": false,
+    "baselineN": 25,
+    "sigma": 0.127
+   },
+   {
+    "fips": "007",
+    "county": "BOONE",
+    "year": 2023,
+    "stratum": "stress_strong",
+    "prodZ": -5.9724,
+    "harmonicZ": -4.693,
+    "prodGate": true,
+    "harmonicGate": true,
+    "baselineN": 27,
+    "sigma": 0.064
+   },
+   {
+    "fips": "011",
+    "county": "BUREAU",
+    "year": 2019,
+    "stratum": "control",
+    "prodZ": -3.8426,
+    "harmonicZ": -4.409,
+    "prodGate": true,
+    "harmonicGate": true,
+    "baselineN": 14,
+    "sigma": 0.059
+   },
+   {
+    "fips": "011",
+    "county": "BUREAU",
+    "year": 2021,
+    "stratum": "control",
+    "prodZ": -1.5862,
+    "harmonicZ": -0.487,
+    "prodGate": true,
+    "harmonicGate": false,
+    "baselineN": 20,
+    "sigma": 0.137
+   },
+   {
+    "fips": "011",
+    "county": "BUREAU",
+    "year": 2024,
+    "stratum": "control",
+    "prodZ": -3.4795,
+    "harmonicZ": -0.698,
+    "prodGate": true,
+    "harmonicGate": false,
+    "baselineN": 24,
+    "sigma": 0.114
+   },
+   {
+    "fips": "019",
+    "county": "CHAMPAIGN",
+    "year": 2020,
+    "stratum": "control",
+    "prodZ": 0.6214,
+    "harmonicZ": 0.255,
+    "prodGate": false,
+    "harmonicGate": false,
+    "baselineN": 13,
+    "sigma": 0.223
+   },
+   {
+    "fips": "019",
+    "county": "CHAMPAIGN",
+    "year": 2021,
+    "stratum": "control",
+    "prodZ": -1.6722,
+    "harmonicZ": -0.863,
+    "prodGate": true,
+    "harmonicGate": false,
+    "baselineN": 16,
+    "sigma": 0.137
+   },
+   {
+    "fips": "037",
+    "county": "DE KALB",
+    "year": 2020,
+    "stratum": "control",
+    "prodZ": -0.1044,
+    "harmonicZ": -0.041,
+    "prodGate": false,
+    "harmonicGate": false,
+    "baselineN": 24,
+    "sigma": 0.164
+   },
+   {
+    "fips": "037",
+    "county": "DE KALB",
+    "year": 2023,
+    "stratum": "stress_moderate",
+    "prodZ": -2.8274,
+    "harmonicZ": -3.035,
+    "prodGate": true,
+    "harmonicGate": true,
+    "baselineN": 31,
+    "sigma": 0.138
+   },
+   {
+    "fips": "037",
+    "county": "DE KALB",
+    "year": 2025,
+    "stratum": "stress_strong",
+    "prodZ": -2.5804,
+    "harmonicZ": -1.494,
+    "prodGate": true,
+    "harmonicGate": false,
+    "baselineN": 29,
+    "sigma": 0.094
+   },
+   {
+    "fips": "053",
+    "county": "FORD",
+    "year": 2020,
+    "stratum": "control",
+    "strataReason": "maxD1+=0%",
+    "eventDate": "2020-07-05",
+    "patchLng": -88.18274,
+    "patchLat": 40.54947,
+    "candidatesTried": 12,
+    "usdmPeakWeek": null,
+    "rmaDroughtIndem": 207961,
+    "rmaTotalIndem": 1321997,
+    "cdlEventYearCapped": false,
+    "harmonicZ": null,
+    "note": "baseline too thin for harmonic fit"
+   },
+   {
+    "fips": "073",
+    "county": "HENRY",
+    "year": 2021,
+    "stratum": "control",
+    "prodZ": -2.7173,
+    "harmonicZ": -1.532,
+    "prodGate": true,
+    "harmonicGate": true,
+    "baselineN": 16,
+    "sigma": 0.13
+   },
+   {
+    "fips": "073",
+    "county": "HENRY",
+    "year": 2022,
+    "stratum": "control",
+    "prodZ": 0.8597,
+    "harmonicZ": 0.439,
+    "prodGate": false,
+    "harmonicGate": false,
+    "baselineN": 13,
+    "sigma": 0.193
+   },
+   {
+    "fips": "073",
+    "county": "HENRY",
+    "year": 2024,
+    "stratum": "control",
+    "prodZ": -1.5396,
+    "harmonicZ": -2.207,
+    "prodGate": true,
+    "harmonicGate": true,
+    "baselineN": 15,
+    "sigma": 0.104
+   },
+   {
+    "fips": "073",
+    "county": "HENRY",
+    "year": 2025,
+    "stratum": "control",
+    "prodZ": -1.1181,
+    "harmonicZ": 0.704,
+    "prodGate": false,
+    "harmonicGate": false,
+    "baselineN": 13,
+    "sigma": 0.159
+   },
+   {
+    "fips": "093",
+    "county": "KENDALL",
+    "year": 2019,
+    "stratum": "control",
+    "strataReason": "maxD1+=0%",
+    "eventDate": "2019-07-05",
+    "patchLng": -88.34474,
+    "patchLat": 41.56942,
+    "candidatesTried": 16,
+    "usdmPeakWeek": null,
+    "rmaDroughtIndem": 0,
+    "rmaTotalIndem": 6788742,
+    "cdlEventYearCapped": false,
+    "harmonicZ": null,
+    "note": "baseline too thin for harmonic fit"
+   },
+   {
+    "fips": "099",
+    "county": "LA SALLE",
+    "year": 2019,
+    "stratum": "control",
+    "prodZ": -4.2526,
+    "harmonicZ": -4.897,
+    "prodGate": true,
+    "harmonicGate": true,
+    "baselineN": 11,
+    "sigma": 0.113
+   },
+   {
+    "fips": "099",
+    "county": "LA SALLE",
+    "year": 2024,
+    "stratum": "control",
+    "prodZ": -2.5716,
+    "harmonicZ": -1.187,
+    "prodGate": true,
+    "harmonicGate": false,
+    "baselineN": 31,
+    "sigma": 0.152
+   },
+   {
+    "fips": "103",
+    "county": "LEE",
+    "year": 2019,
+    "stratum": "control",
+    "prodZ": 0.3071,
+    "harmonicZ": 0.533,
+    "prodGate": false,
+    "harmonicGate": false,
+    "baselineN": 15,
+    "sigma": 0.082
+   },
+   {
+    "fips": "103",
+    "county": "LEE",
+    "year": 2020,
+    "stratum": "control",
+    "prodZ": -0.0374,
+    "harmonicZ": -0.006,
+    "prodGate": false,
+    "harmonicGate": false,
+    "baselineN": 23,
+    "sigma": 0.087
+   },
+   {
+    "fips": "103",
+    "county": "LEE",
+    "year": 2021,
+    "stratum": "control",
+    "prodZ": -1.7424,
+    "harmonicZ": -0.924,
+    "prodGate": true,
+    "harmonicGate": false,
+    "baselineN": 27,
+    "sigma": 0.182
+   },
+   {
+    "fips": "103",
+    "county": "LEE",
+    "year": 2023,
+    "stratum": "stress_strong",
+    "prodZ": -0.4408,
+    "harmonicZ": -0.684,
+    "prodGate": false,
+    "harmonicGate": false,
+    "baselineN": 28,
+    "sigma": 0.134
+   },
+   {
+    "fips": "103",
+    "county": "LEE",
+    "year": 2024,
+    "stratum": "control",
+    "prodZ": -5.9279,
+    "harmonicZ": -3.666,
+    "prodGate": true,
+    "harmonicGate": true,
+    "baselineN": 33,
+    "sigma": 0.098
+   },
+   {
+    "fips": "113",
+    "county": "MC LEAN",
+    "year": 2022,
+    "stratum": "control",
+    "prodZ": 1.0717,
+    "harmonicZ": 1.138,
+    "prodGate": false,
+    "harmonicGate": false,
+    "baselineN": 15,
+    "sigma": 0.109
+   },
+   {
+    "fips": "113",
+    "county": "MC LEAN",
+    "year": 2024,
+    "stratum": "control",
+    "prodZ": 0.4083,
+    "harmonicZ": 0.184,
+    "prodGate": false,
+    "harmonicGate": false,
+    "baselineN": 18,
+    "sigma": 0.079
+   },
+   {
+    "fips": "123",
+    "county": "MARSHALL",
+    "year": 2020,
+    "stratum": "control",
+    "prodZ": -0.094,
+    "harmonicZ": -0.292,
+    "prodGate": false,
+    "harmonicGate": false,
+    "baselineN": 25,
+    "sigma": 0.195
+   },
+   {
+    "fips": "123",
+    "county": "MARSHALL",
+    "year": 2022,
+    "stratum": "control",
+    "prodZ": 0.7515,
+    "harmonicZ": 0.515,
+    "prodGate": false,
+    "harmonicGate": false,
+    "baselineN": 23,
+    "sigma": 0.136
+   },
+   {
+    "fips": "167",
+    "county": "SANGAMON",
+    "year": 2020,
+    "stratum": "control",
+    "prodZ": -5.4579,
+    "harmonicZ": -3.012,
+    "prodGate": true,
+    "harmonicGate": true,
+    "baselineN": 19,
+    "sigma": 0.097
+   },
+   {
+    "fips": "167",
+    "county": "SANGAMON",
+    "year": 2024,
+    "stratum": "control",
+    "prodZ": -0.7146,
+    "harmonicZ": -0.875,
+    "prodGate": false,
+    "harmonicGate": false,
+    "baselineN": 27,
+    "sigma": 0.061
+   },
+   {
+    "fips": "195",
+    "county": "WHITESIDE",
+    "year": 2020,
+    "stratum": "control",
+    "prodZ": -0.7087,
+    "harmonicZ": -0.647,
+    "prodGate": false,
+    "harmonicGate": false,
+    "baselineN": 14,
+    "sigma": 0.158
+   },
+   {
+    "fips": "195",
+    "county": "WHITESIDE",
+    "year": 2021,
+    "stratum": "control",
+    "prodZ": -0.7451,
+    "harmonicZ": -0.68,
+    "prodGate": false,
+    "harmonicGate": false,
+    "baselineN": 15,
+    "sigma": 0.191
+   },
+   {
+    "fips": "195",
+    "county": "WHITESIDE",
+    "year": 2022,
+    "stratum": "control",
+    "prodZ": 1.8391,
+    "harmonicZ": 7.264,
+    "prodGate": false,
+    "harmonicGate": false,
+    "baselineN": 12,
+    "sigma": 0.184
+   },
+   {
+    "fips": "195",
+    "county": "WHITESIDE",
+    "year": 2023,
+    "stratum": "stress_moderate",
+    "prodZ": -1.4861,
+    "harmonicZ": -3.862,
+    "prodGate": false,
+    "harmonicGate": true,
+    "baselineN": 14,
+    "sigma": 0.091
+   },
+   {
+    "fips": "195",
+    "county": "WHITESIDE",
+    "year": 2024,
+    "stratum": "control",
+    "prodZ": 0.4498,
+    "harmonicZ": 2.224,
+    "prodGate": false,
+    "harmonicGate": false,
+    "baselineN": 16,
+    "sigma": 0.138
+   }
+  ]
+ },
+ "lever2_ssurgo": {
+  "method": "SSURGO nonirrigated land capability class (1=best..8, muaggatt.niccdcd via Soil Data Access) at patch centroid vs control fire status — NCCPI not exposed via SDA, capability class is the available proxy",
+  "controlFiredMeanCapClass": 1.692,
+  "controlQuietMeanCapClass": 2.278,
+  "nFired": 13,
+  "nQuiet": 18,
+  "perUnit": [
+   {
+    "fips": "007",
+    "county": "BOONE",
+    "year": 2019,
+    "stratum": "control",
+    "fired": false,
+    "capabilityClass": 1
+   },
+   {
+    "fips": "007",
+    "county": "BOONE",
+    "year": 2020,
+    "stratum": "control",
+    "fired": false,
+    "capabilityClass": 2
+   },
+   {
+    "fips": "007",
+    "county": "BOONE",
+    "year": 2021,
+    "stratum": "stress_strong",
+    "fired": false,
+    "capabilityClass": 2
+   },
+   {
+    "fips": "007",
+    "county": "BOONE",
+    "year": 2022,
+    "stratum": "control",
+    "fired": false,
+    "capabilityClass": 2
+   },
+   {
+    "fips": "007",
+    "county": "BOONE",
+    "year": 2023,
+    "stratum": "stress_strong",
+    "fired": true,
+    "capabilityClass": 1
+   },
+   {
+    "fips": "011",
+    "county": "BUREAU",
+    "year": 2019,
+    "stratum": "control",
+    "fired": true,
+    "capabilityClass": 2
+   },
+   {
+    "fips": "011",
+    "county": "BUREAU",
+    "year": 2021,
+    "stratum": "control",
+    "fired": true,
+    "capabilityClass": 2
+   },
+   {
+    "fips": "011",
+    "county": "BUREAU",
+    "year": 2024,
+    "stratum": "control",
+    "fired": true,
+    "capabilityClass": 2
+   },
+   {
+    "fips": "019",
+    "county": "CHAMPAIGN",
+    "year": 2020,
+    "stratum": "control",
+    "fired": false,
+    "capabilityClass": 1
+   },
+   {
+    "fips": "019",
+    "county": "CHAMPAIGN",
+    "year": 2021,
+    "stratum": "control",
+    "fired": true,
+    "capabilityClass": 1
+   },
+   {
+    "fips": "037",
+    "county": "DE KALB",
+    "year": 2020,
+    "stratum": "control",
+    "fired": false,
+    "capabilityClass": 2
+   },
+   {
+    "fips": "037",
+    "county": "DE KALB",
+    "year": 2023,
+    "stratum": "stress_moderate",
+    "fired": true,
+    "capabilityClass": 2
+   },
+   {
+    "fips": "037",
+    "county": "DE KALB",
+    "year": 2025,
+    "stratum": "stress_strong",
+    "fired": true,
+    "capabilityClass": 2
+   },
+   {
+    "fips": "053",
+    "county": "FORD",
+    "year": 2020,
+    "stratum": "control",
+    "fired": false,
+    "capabilityClass": 1
+   },
+   {
+    "fips": "073",
+    "county": "HENRY",
+    "year": 2021,
+    "stratum": "control",
+    "fired": true,
+    "capabilityClass": 4
+   },
+   {
+    "fips": "073",
+    "county": "HENRY",
+    "year": 2022,
+    "stratum": "control",
+    "fired": false,
+    "capabilityClass": 3
+   },
+   {
+    "fips": "073",
+    "county": "HENRY",
+    "year": 2024,
+    "stratum": "control",
+    "fired": true,
+    "capabilityClass": 2
+   },
+   {
+    "fips": "073",
+    "county": "HENRY",
+    "year": 2025,
+    "stratum": "control",
+    "fired": false,
+    "capabilityClass": 3
+   },
+   {
+    "fips": "093",
+    "county": "KENDALL",
+    "year": 2019,
+    "stratum": "control",
+    "fired": true,
+    "capabilityClass": 2
+   },
+   {
+    "fips": "099",
+    "county": "LA SALLE",
+    "year": 2019,
+    "stratum": "control",
+    "fired": true,
+    "capabilityClass": 1
+   },
+   {
+    "fips": "099",
+    "county": "LA SALLE",
+    "year": 2024,
+    "stratum": "control",
+    "fired": true,
+    "capabilityClass": 2
+   },
+   {
+    "fips": "103",
+    "county": "LEE",
+    "year": 2019,
+    "stratum": "control",
+    "fired": false,
+    "capabilityClass": 3
+   },
+   {
+    "fips": "103",
+    "county": "LEE",
+    "year": 2020,
+    "stratum": "control",
+    "fired": false,
+    "capabilityClass": 4
+   },
+   {
+    "fips": "103",
+    "county": "LEE",
+    "year": 2021,
+    "stratum": "control",
+    "fired": true,
+    "capabilityClass": 1
+   },
+   {
+    "fips": "103",
+    "county": "LEE",
+    "year": 2023,
+    "stratum": "stress_strong",
+    "fired": false,
+    "capabilityClass": 2
+   },
+   {
+    "fips": "103",
+    "county": "LEE",
+    "year": 2024,
+    "stratum": "control",
+    "fired": true,
+    "capabilityClass": 1
+   },
+   {
+    "fips": "113",
+    "county": "MC LEAN",
+    "year": 2022,
+    "stratum": "control",
+    "fired": false,
+    "capabilityClass": 1
+   },
+   {
+    "fips": "113",
+    "county": "MC LEAN",
+    "year": 2024,
+    "stratum": "control",
+    "fired": false,
+    "capabilityClass": 2
+   },
+   {
+    "fips": "123",
+    "county": "MARSHALL",
+    "year": 2020,
+    "stratum": "control",
+    "fired": false,
+    "capabilityClass": 2
+   },
+   {
+    "fips": "123",
+    "county": "MARSHALL",
+    "year": 2022,
+    "stratum": "control",
+    "fired": true,
+    "capabilityClass": 1
+   },
+   {
+    "fips": "167",
+    "county": "SANGAMON",
+    "year": 2020,
+    "stratum": "control",
+    "fired": true,
+    "capabilityClass": 1
+   },
+   {
+    "fips": "167",
+    "county": "SANGAMON",
+    "year": 2024,
+    "stratum": "control",
+    "fired": false,
+    "capabilityClass": 1
+   },
+   {
+    "fips": "195",
+    "county": "WHITESIDE",
+    "year": 2020,
+    "stratum": "control",
+    "fired": false,
+    "capabilityClass": 6
+   },
+   {
+    "fips": "195",
+    "county": "WHITESIDE",
+    "year": 2021,
+    "stratum": "control",
+    "fired": false,
+    "capabilityClass": 3
+   },
+   {
+    "fips": "195",
+    "county": "WHITESIDE",
+    "year": 2022,
+    "stratum": "control",
+    "fired": false,
+    "capabilityClass": 2
+   },
+   {
+    "fips": "195",
+    "county": "WHITESIDE",
+    "year": 2023,
+    "stratum": "stress_moderate",
+    "fired": false,
+    "capabilityClass": 3
+   },
+   {
+    "fips": "195",
+    "county": "WHITESIDE",
+    "year": 2024,
+    "stratum": "control",
+    "fired": false,
+    "capabilityClass": 2
+   }
+  ]
+ },
+ "lever3_hls": {
+  "window": "2023-06-01..2023-07-15 over DeKalb patch",
+  "hlsS30Scenes": 14,
+  "hlsL30Scenes": 10,
+  "combined": 24,
+  "sentinelOnlyEquivalent": "~9 (5-day revisit)",
+  "downloadGate": "LP DAAC data URLs require a (free) NASA Earthdata token — flagged as an access gate, not integrated without it"
+ }
+}
