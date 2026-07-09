@@ -16,7 +16,6 @@
 | CNAME | `dashboard` | `cname.vercel-dns.com` | **DNS only** (grey cloud) |
 
 DNS-only lets Vercel terminate TLS and auto-issue the Let's Encrypt cert (the zone's CAA records already allow `letsencrypt.org`). If you prefer to keep Cloudflare proxying (orange cloud), set the zone SSL mode to **Full (strict)** and expect a few minutes for both certs to settle. Do **not** switch the domain's nameservers to Vercel — that would move the live landing site's DNS too. After the record exists: `curl -I https://dashboard.neumeric.xyz/api/health` should return 200 with `{"ok":true}`.
-- **Database** — Turso (hosted libsql). Same schema/migrations as local dev; migrations run automatically at cold start.
 
 ### Clean URLs (landing)
 
