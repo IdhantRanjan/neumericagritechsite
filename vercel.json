@@ -1,0 +1,11 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "redirects": [
+    { "source": "/index.html", "destination": "/", "statusCode": 301 },
+    { "source": "/index", "destination": "/", "statusCode": 301 },
+    { "source": "/product.html", "destination": "/product", "statusCode": 301 },
+    { "source": "/manifesto.html", "destination": "/manifesto", "statusCode": 301 },
+    { "source": "/contact.html", "destination": "/contact", "statusCode": 301 }
+  ]
+}
